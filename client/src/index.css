@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #fffdf5;
+    color: #2c2c2c;
+  }
+
+  body {
+    font-family: 'Lora', Georgia, serif;
+    background-color: #fffdf5;
+    color: #2c2c2c;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-heading {
+    font-family: 'Montserrat', system-ui, sans-serif;
+  }
+
+  * {
+    border-color: #e5e5e0;
+  }
+
+  ::selection {
+    background-color: #1e8b8b22;
+  }
+}
+
+@layer components {
+  .rule-teal {
+    height: 1px;
+    background: linear-gradient(to right, #1e8b8b, #1e8b8b88, transparent);
+  }
+
+  .rule-copper {
+    height: 1px;
+    background: linear-gradient(to right, #c87b33, #edcf30, transparent);
+  }
+
+  .teal-link {
+    @apply text-teal hover:text-teal-dark underline-offset-2 hover:underline transition-colors;
+  }
+
+  .card {
+    @apply bg-linen border border-[#e5e5e0] rounded-sm;
+  }
+
+  .score-ring-strong  { color: #1e8b8b; }
+  .score-ring-mid     { color: #c87b33; }
+  .score-ring-weak    { color: #b0392e; }
+}
