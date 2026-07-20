@@ -1,7 +1,38 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = 'claude-opus-4-7';
+// Tiered models — match cost to task value
+const MODEL_PREMIUM = 'claude-fable-5';   // resume tailoring + cover letters (the deliverables)
+const MODEL_STANDARD = 'claude-opus-4-8'; // scoring, questions, interview prep, debrief
+const MODEL_FAST = 'claude-haiku-4-5';    // image text extraction, chatbot
+const FALLBACK_MODEL = 'claude-opus-4-8';
+
+// Fable 5 calls go through the beta endpoint so a safety-classifier decline
+// automatically retries on Opus 4.8 in the same request. Other models use the
+// standard endpoint.
+function createMessage(params) {
+  if (params.model === MODEL_PREMIUM) {
+    return client.beta.messages.create({
+      ...params,
+      betas: ['server-side-fallback-2026-06-01'],
+      fallbacks: [{ model: FALLBACK_MODEL }],
+    });
+  }
+  return client.messages.create(params);
+}
+
+// Fable 5 always reasons internally, so responses can contain thinking blocks
+// before the text block. Never read content[0] directly.
+function extractText(response) {
+  if (response.stop_reason === 'refusal') {
+    throw new Error('The AI declined this request. Try rephrasing the job posting or resume content.');
+  }
+  const textBlock = response.content.find(b => b.type === 'text');
+  if (!textBlock) {
+    throw new Error('The AI returned an empty response. Please try again.');
+  }
+  return textBlock.text;
+}
 
 const RECRUITER_SYSTEM = `You are a senior recruiter with 20 years of placement experience. You evaluate candidates honestly and specifically. The resume is canonical — you never invent a skill, metric, title, scope, or outcome the candidate has not documented. If a role requires something absent from the resume, you say so plainly. No fabrication, no bridges over gaps.
 
@@ -19,8 +50,8 @@ function parseJSON(text) {
 
 async function extractTextFromImage(imageBuffer, mimeType) {
   const base64 = imageBuffer.toString('base64');
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_FAST,
     max_tokens: 2000,
     messages: [{
       role: 'user',
@@ -36,12 +67,12 @@ async function extractTextFromImage(imageBuffer, mimeType) {
       ],
     }],
   });
-  return response.content[0].text.trim();
+  return extractText(response).trim();
 }
 
 async function fitScore(resumeText, jobDescription) {
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_STANDARD,
     max_tokens: 1500,
     system: [
       {
@@ -76,12 +107,12 @@ async function fitScore(resumeText, jobDescription) {
     ],
   });
 
-  return parseJSON(response.content[0].text);
+  return parseJSON(extractText(response));
 }
 
 async function scoreImprovementQuestions(resumeText, jobDescription, fitReport) {
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_STANDARD,
     max_tokens: 1200,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
@@ -113,7 +144,7 @@ Limit to 3–5 questions maximum.`,
     ],
   });
 
-  return parseJSON(response.content[0].text);
+  return parseJSON(extractText(response));
 }
 
 async function tailorResume(resumeText, jobDescription, answers = [], style = 'classic') {
@@ -122,8 +153,8 @@ async function tailorResume(resumeText, jobDescription, answers = [], style = 'c
       answers.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n')
     : '';
 
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_PREMIUM,
     max_tokens: 3000,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
@@ -161,7 +192,7 @@ Return the complete resume as plain text. Nothing before the candidate's name. N
     ],
   });
 
-  return response.content[0].text.trim();
+  return extractText(response).trim();
 }
 
 async function writeCoverLetter(resumeText, jobDescription, answers = [], tailoredResumeText = '') {
@@ -170,8 +201,8 @@ async function writeCoverLetter(resumeText, jobDescription, answers = [], tailor
     ? '\n\nADDITIONAL CONTEXT:\n' + answers.map(a => `${a.question}: ${a.answer}`).join('\n')
     : '';
 
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_PREMIUM,
     max_tokens: 1500,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
@@ -198,12 +229,12 @@ Rules:
     ],
   });
 
-  return response.content[0].text.trim();
+  return extractText(response).trim();
 }
 
 async function interviewPrep(resumeText, jobDescription) {
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_STANDARD,
     max_tokens: 3000,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
@@ -233,12 +264,12 @@ Provide 4–5 behavioral questions, 3–4 technical questions, 4 questions to as
     ],
   });
 
-  return parseJSON(response.content[0].text);
+  return parseJSON(extractText(response));
 }
 
 async function postInterviewDebrief(resumeText, jobDescription, interviewNotes) {
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_STANDARD,
     max_tokens: 2000,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
@@ -263,14 +294,14 @@ async function postInterviewDebrief(resumeText, jobDescription, interviewNotes) 
     ],
   });
 
-  return parseJSON(response.content[0].text);
+  return parseJSON(extractText(response));
 }
 
 async function rescoreWithAnswers(resumeText, jobDescription, originalReport, answers) {
   const answersText = answers.map(a => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n');
 
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_STANDARD,
     max_tokens: 800,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
@@ -293,7 +324,7 @@ Return ONLY valid JSON:
     }],
   });
 
-  return parseJSON(response.content[0].text);
+  return parseJSON(extractText(response));
 }
 
 async function chat(messages, context = {}) {
@@ -306,8 +337,8 @@ async function chat(messages, context = {}) {
     context.hasResume != null && `Has resume on file: ${context.hasResume}`,
   ].filter(Boolean).join('\n');
 
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_FAST,
     max_tokens: 600,
     system: [
       {
@@ -332,12 +363,12 @@ TONE: Warm, direct, specific. Short answers unless depth is needed. No jargon.${
     messages,
   });
 
-  return response.content[0].text.trim();
+  return extractText(response).trim();
 }
 
 async function suggestRoles(resumeText) {
-  const response = await client.messages.create({
-    model: MODEL,
+  const response = await createMessage({
+    model: MODEL_STANDARD,
     max_tokens: 1200,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
@@ -362,7 +393,7 @@ Return 2–3 categories and 8–12 specific role titles. Be realistic — match 
     ],
   });
 
-  return parseJSON(response.content[0].text);
+  return parseJSON(extractText(response));
 }
 
 module.exports = {

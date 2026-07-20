@@ -7,7 +7,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.52.0",
+    "@anthropic-ai/sdk": "^0.112.4",
     "@supabase/supabase-js": "^2.49.0",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
