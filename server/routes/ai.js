@@ -141,11 +141,29 @@ router.post('/score-questions/:userJobId', async (req, res, next) => {
 });
 
 // Tailor resume
+const RESUME_BUILD_LIMIT = 5;
+
 router.post('/tailor-resume/:userJobId', async (req, res, next) => {
   try {
     const { resumeText, userJob, job } = await getContext(req);
     if (!resumeText) return res.status(400).json({ error: 'No active resume found' });
     if (!job) return res.status(404).json({ error: 'Job not found' });
+
+    // Enforce the resume build limit. Regenerating for the same job is free.
+    const { data: profile } = await req.db
+      .from('profiles')
+      .select('resume_builds_used')
+      .eq('id', req.user.id)
+      .single();
+
+    const buildsUsed = profile?.resume_builds_used || 0;
+    const isRegeneration = Boolean(userJob?.tailored_resume_text);
+
+    if (!isRegeneration && buildsUsed >= RESUME_BUILD_LIMIT) {
+      return res.status(403).json({
+        error: `You've used all ${RESUME_BUILD_LIMIT} of your resume builds. More are coming soon.`,
+      });
+    }
 
     const { answers = [], style } = req.body;
 
@@ -161,7 +179,14 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id);
 
-    res.json({ tailored_resume_text: tailored });
+    if (!isRegeneration) {
+      await req.db
+        .from('profiles')
+        .update({ resume_builds_used: buildsUsed + 1 })
+        .eq('id', req.user.id);
+    }
+
+    res.json({ tailored_resume_text: tailored, builds_used: isRegeneration ? buildsUsed : buildsUsed + 1, builds_limit: RESUME_BUILD_LIMIT });
   } catch (err) {
     next(err);
   }
