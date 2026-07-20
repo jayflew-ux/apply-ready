@@ -8,6 +8,7 @@ import DiscoverTab   from '../components/dashboard/DiscoverTab';
 import InterestedTab from '../components/dashboard/InterestedTab';
 import SubmittedTab  from '../components/dashboard/SubmittedTab';
 import AddJobModal   from '../components/dashboard/AddJobModal';
+import GettingStarted from '../components/dashboard/GettingStarted';
 import Button from '../components/ui/Button';
 
 const TABS = ['Discover', 'Interested', 'Submitted'];
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [submitted, setSubmitted] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [addOpen, setAddOpen]   = useState(false);
+  const [hasResume, setHasResume] = useState(null); // null = still checking
 
   // Keep chat context in sync with active tab
   useEffect(() => {
@@ -36,6 +38,11 @@ export default function Dashboard() {
       }
       loadData();
     }).catch(() => setLoading(false));
+
+    // Resume check drives the getting-started checklist and Discover tab
+    api.resume.get()
+      .then(r => setHasResume(Boolean(r?.id || r?.raw_text)))
+      .catch(() => setHasResume(false));
   }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadData() {
@@ -98,6 +105,16 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 pb-20">
+        {/* Getting started checklist — shows until all steps complete */}
+        {hasResume !== null && (
+          <GettingStarted
+            hasResume={hasResume}
+            hasJob={jobs.length > 0 || submitted.length > 0}
+            hasScore={jobs.some(j => j.fitScore != null) || submitted.length > 0}
+            onAddJob={() => setAddOpen(true)}
+          />
+        )}
+
         {/* Tab bar */}
         <div className="flex items-end gap-0 border-b border-[#e5e5e0] mt-6">
           {TABS.map(t => {
@@ -128,7 +145,7 @@ export default function Dashboard() {
         </div>
 
         <div className="py-6">
-          {tab === 'Discover'   && <DiscoverTab />}
+          {tab === 'Discover'   && <DiscoverTab hasResume={hasResume} />}
           {tab === 'Interested' && <InterestedTab jobs={jobs} loading={loading} onStatusChange={handleStatusChange} />}
           {tab === 'Submitted'  && <SubmittedTab  jobs={submitted} loading={loading} onJourneyUpdate={handleJourneyUpdate} />}
         </div>

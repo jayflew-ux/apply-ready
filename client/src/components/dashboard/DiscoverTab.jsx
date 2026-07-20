@@ -22,15 +22,31 @@ function searchURL(engine, title) {
   return `https://www.google.com/search?q=${q}+jobs`;
 }
 
-export default function DiscoverTab() {
+export default function DiscoverTab({ hasResume }) {
   const [data, setData]       = useState(null); // { categories, roles }
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
   const { setContext }        = useChatContext();
 
   useEffect(() => {
-    if (!data) load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // Only load once we know a resume exists — avoids error flashes for new users
+    if (hasResume && !data) load();
+  }, [hasResume]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // No resume yet — friendly setup prompt instead of an error
+  if (hasResume === false) {
+    return (
+      <div className="py-16 text-center flex flex-col items-center gap-3">
+        <p className="font-montserrat font-bold text-base text-teal-deeper">Upload your resume to unlock role discovery</p>
+        <p className="font-lora text-sm text-ink/50 max-w-md leading-relaxed">
+          Once your resume is on file, this tab shows the roles you are best positioned for, with direct links to search for open listings.
+        </p>
+        <a href="/profile" className="mt-2 inline-block px-5 py-2 bg-teal text-white font-montserrat font-semibold text-sm rounded-sm hover:bg-teal-deeper transition-colors">
+          Upload resume
+        </a>
+      </div>
+    );
+  }
 
   async function load() {
     setLoading(true);
