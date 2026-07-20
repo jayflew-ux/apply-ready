@@ -141,7 +141,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-linen">
       <header className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-        <Link to="/dashboard" className="font-montserrat font-bold text-teal text-sm tracking-widest uppercase">Apply Ready</Link>
+        <Link to="/dashboard" className="font-montserrat font-bold text-teal text-sm tracking-widest uppercase">Dream Job Ready</Link>
         <button onClick={signOut} className="font-lora text-sm text-ink/50 hover:text-ink transition-colors">Sign out</button>
       </header>
 

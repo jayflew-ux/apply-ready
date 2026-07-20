@@ -77,7 +77,7 @@ export default function Dashboard() {
       <header className="sticky top-0 z-10 bg-linen/95 backdrop-blur-sm border-b border-[#e5e5e0]">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <Link to="/" className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase flex-shrink-0">
-            Apply Ready
+            Dream Job Ready
           </Link>
 
           <div className="flex items-center gap-2">

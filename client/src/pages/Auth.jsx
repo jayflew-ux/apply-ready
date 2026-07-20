@@ -51,7 +51,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen bg-linen flex items-center justify-center px-4">
         <div className="max-w-sm w-full text-center">
-          <span className="font-montserrat text-xs uppercase tracking-widest text-copper block mb-6">Apply Ready</span>
+          <span className="font-montserrat text-xs uppercase tracking-widest text-copper block mb-6">Dream Job Ready</span>
           <h1 className="font-montserrat font-bold text-2xl text-teal-deeper mb-3">Check your email</h1>
           <p className="font-lora text-sm text-ink/70 leading-relaxed">
             We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
@@ -65,7 +65,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-linen flex items-center justify-center px-4">
       <div className="max-w-sm w-full">
-        <Link to="/" className="block text-center font-montserrat text-xs uppercase tracking-widest text-copper mb-8">Apply Ready</Link>
+        <Link to="/" className="block text-center font-montserrat text-xs uppercase tracking-widest text-copper mb-8">Dream Job Ready</Link>
 
         <h1 className="font-montserrat font-bold text-2xl text-teal-deeper mb-1 text-center">
           {mode === 'signup' ? 'Create your account' : 'Welcome back'}

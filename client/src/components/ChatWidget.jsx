@@ -11,7 +11,7 @@ const PAGE_LABELS = {
   '/onboarding': 'Onboarding',
 };
 
-const WELCOME = "Hi! I'm your Apply Ready assistant. Ask me anything — how the app works, what a fit score means, why your Discover tab is empty, whatever you need.";
+const WELCOME = "Hi! I'm your Dream Job Ready assistant. Ask me anything — how the app works, what a fit score means, why your Discover tab is empty, whatever you need.";
 
 export default function ChatWidget() {
   const [open, setOpen]       = useState(false);
@@ -77,7 +77,7 @@ export default function ChatWidget() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e0] flex-shrink-0 bg-white rounded-t-sm">
             <div>
-              <p className="font-montserrat font-bold text-sm text-teal-deeper">Apply Ready Assistant</p>
+              <p className="font-montserrat font-bold text-sm text-teal-deeper">Dream Job Ready Assistant</p>
               <p className="font-lora text-xs text-ink/40">Ask me anything</p>
             </div>
             <button

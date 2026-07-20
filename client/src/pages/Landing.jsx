@@ -7,7 +7,7 @@ const JOURNEY = [
     step: '01',
     label: 'Know what fits',
     heading: 'Discover roles built for your background.',
-    body: "Upload your resume and Apply Ready tells you exactly what roles you are positioned for — with the specific reason why, and where to find open listings. No guessing. No spray and pray.",
+    body: "Upload your resume and Dream Job Ready tells you exactly what roles you are positioned for — with the specific reason why, and where to find open listings. No guessing. No spray and pray.",
   },
   {
     step: '02',
@@ -42,7 +42,7 @@ export default function Landing() {
     <div className="min-h-screen bg-linen">
       {/* Nav */}
       <header className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-        <span className="font-montserrat font-bold text-teal tracking-widest text-sm uppercase">Apply Ready</span>
+        <span className="font-montserrat font-bold text-teal tracking-widest text-sm uppercase">Dream Job Ready</span>
         <div className="flex items-center gap-3">
           {user ? (
             <Link to="/dashboard">
@@ -69,7 +69,7 @@ export default function Landing() {
           <span className="text-teal">to your first step through the door.</span>
         </h1>
         <p className="font-lora text-lg text-ink/70 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Apply Ready walks with you through every stage of the job search — discovering what fits your background, tailoring your materials, preparing you to interview, and helping you reflect on what happened after. Built on what you have actually done, not what sounds good.
+          Dream Job Ready walks with you through every stage of the job search — discovering what fits your background, tailoring your materials, preparing you to interview, and helping you reflect on what happened after. Built on what you have actually done, not what sounds good.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link to="/auth?mode=signup">
@@ -121,7 +121,7 @@ export default function Landing() {
           Found something you want to go after?
         </h2>
         <p className="font-lora text-base text-ink/70 leading-relaxed max-w-2xl mx-auto">
-          Paste the job description or upload a screenshot of any posting you find. Apply Ready scores your fit, tailors your resume, and gets you ready to pursue it — all in one flow.
+          Paste the job description or upload a screenshot of any posting you find. Dream Job Ready scores your fit, tailors your resume, and gets you ready to pursue it — all in one flow.
         </p>
       </section>
 
@@ -137,7 +137,7 @@ export default function Landing() {
           Your resume is the source of truth.
         </h2>
         <p className="font-lora text-base text-ink/70 leading-relaxed max-w-2xl mx-auto">
-          Apply Ready never invents a skill, title, metric, or outcome you have not documented. If a role requires something you do not have, the AI says so plainly and helps you decide what to do with that information. This is not a resume inflation machine. It is a preparation machine.
+          Dream Job Ready never invents a skill, title, metric, or outcome you have not documented. If a role requires something you do not have, the AI says so plainly and helps you decide what to do with that information. This is not a resume inflation machine. It is a preparation machine.
         </p>
       </section>
 
@@ -148,7 +148,7 @@ export default function Landing() {
             Ready to stretch toward your next role?
           </h2>
           <p className="font-lora text-linen/70 mb-8 leading-relaxed">
-            Upload your resume, see what fits your background, and let Apply Ready walk with you through every step from there.
+            Upload your resume, see what fits your background, and let Dream Job Ready walk with you through every step from there.
           </p>
           <Link to="/auth?mode=signup">
             <Button variant="outline" size="lg" className="border-linen text-linen hover:bg-linen hover:text-teal-deeper">
@@ -160,8 +160,8 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between border-t border-[#e5e5e0]">
-        <span className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase">Apply Ready</span>
-        <span className="font-lora text-xs text-ink/40">&copy; {new Date().getFullYear()} Apply Ready</span>
+        <span className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase">Dream Job Ready</span>
+        <span className="font-lora text-xs text-ink/40">&copy; {new Date().getFullYear()} Dream Job Ready</span>
       </footer>
     </div>
   );

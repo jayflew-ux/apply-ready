@@ -46,7 +46,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-linen flex flex-col">
       <header className="max-w-2xl mx-auto w-full px-6 py-6">
-        <span className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase">Apply Ready</span>
+        <span className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase">Dream Job Ready</span>
       </header>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-6 pb-20">
