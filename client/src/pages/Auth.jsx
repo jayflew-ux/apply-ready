@@ -14,7 +14,7 @@ export default function Auth() {
   const [loading, setLoading]   = useState(false);
   const [sent, setSent]         = useState(false);
 
-  const { signIn, signUp, signInWithGoogle, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, resetPassword, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,6 +28,13 @@ export default function Auth() {
 
     if (mode === 'signup') {
       const { error } = await signUp(email, password, name);
+      if (error) {
+        setError(error.message);
+      } else {
+        setSent(true);
+      }
+    } else if (mode === 'forgot') {
+      const { error } = await resetPassword(email);
       if (error) {
         setError(error.message);
       } else {
@@ -48,15 +55,52 @@ export default function Auth() {
   }
 
   if (sent) {
+    const isReset = mode === 'forgot';
     return (
       <div className="min-h-screen bg-linen flex items-center justify-center px-4">
         <div className="max-w-sm w-full text-center">
           <span className="font-montserrat text-xs uppercase tracking-widest text-copper block mb-6">Dream Job Ready</span>
           <h1 className="font-montserrat font-bold text-2xl text-teal-deeper mb-3">Check your email</h1>
           <p className="font-lora text-sm text-ink/70 leading-relaxed">
-            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
+            {isReset ? (
+              <>We sent a password reset link to <strong>{email}</strong>. Click it to set a new password.</>
+            ) : (
+              <>We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</>
+            )}
+          </p>
+          <p className="font-lora text-xs text-ink/45 leading-relaxed mt-4">
+            The email comes from Supabase, our authentication provider. If you do not see it within a few minutes, check your spam or promotions folder.
           </p>
           <Link to="/" className="mt-8 inline-block teal-link text-sm font-lora">Back to home</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'forgot') {
+    return (
+      <div className="min-h-screen bg-linen flex items-center justify-center px-4">
+        <div className="max-w-sm w-full">
+          <Link to="/" className="block text-center font-montserrat text-xs uppercase tracking-widest text-copper mb-8">Dream Job Ready</Link>
+          <h1 className="font-montserrat font-bold text-2xl text-teal-deeper mb-1 text-center">Reset your password</h1>
+          <p className="font-lora text-sm text-ink/60 text-center mb-8">
+            Enter your email and we will send you a reset link.
+          </p>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <Input
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            {error && <p className="font-lora text-sm text-red-600">{error}</p>}
+            <Button type="submit" loading={loading} className="mt-1">Send reset link</Button>
+          </form>
+          <p className="font-lora text-sm text-center text-ink/60 mt-6">
+            <button onClick={() => { setMode('signin'); setError(''); }} className="teal-link">Back to sign in</button>
+          </p>
         </div>
       </div>
     );
@@ -121,6 +165,16 @@ export default function Auth() {
             required
             minLength={mode === 'signup' ? 8 : undefined}
           />
+
+          {mode === 'signin' && (
+            <button
+              type="button"
+              onClick={() => { setMode('forgot'); setError(''); }}
+              className="teal-link text-xs font-lora self-end -mt-2"
+            >
+              Forgot password?
+            </button>
+          )}
 
           {error && <p className="font-lora text-sm text-red-600">{error}</p>}
 

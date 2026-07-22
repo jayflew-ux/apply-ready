@@ -49,8 +49,23 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
   }
 
+  // Sends a password-reset email. The link lands on /reset-password.
+  async function resetPassword(email) {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { data, error };
+  }
+
+  // Sets a new password for the currently-authenticated session
+  // (the reset link signs the user in temporarily so this works).
+  async function updatePassword(newPassword) {
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+    return { data, error };
+  }
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut, resetPassword, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );
