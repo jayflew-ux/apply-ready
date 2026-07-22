@@ -24,13 +24,15 @@ async function createMessage(params) {
   return response;
 }
 
-// Fable 5 always reasons internally, so responses can contain thinking blocks
-// before the text block. Never read content[0] directly.
+// Fable 5 always reasons internally, and tool-using calls (web search) can
+// emit multiple text blocks — commentary, then a final answer. Always take
+// the last one, which is safe for plain single-block responses too.
 function extractText(response) {
   if (response.stop_reason === 'refusal') {
     throw new Error('The AI declined this request. Try rephrasing the job posting or resume content.');
   }
-  const textBlock = response.content.find(b => b.type === 'text');
+  const textBlocks = response.content.filter(b => b.type === 'text');
+  const textBlock = textBlocks[textBlocks.length - 1];
   if (!textBlock) {
     throw new Error('The AI returned an empty response. Please try again.');
   }
@@ -182,6 +184,8 @@ STRUCTURE RULES (non-negotiable, apply regardless of style):
 - Each bullet point starts with a strong action verb and includes a specific outcome or scope where available.
 - Under SKILLS, group into subcategories (e.g., Technical, Leadership, Tools) when there are 6+ skills.
 
+LENGTH RULE (non-negotiable): the final resume must fit within two U.S. Letter pages when printed. Target roughly 500–650 words total. Prioritize the highest-impact, most relevant experience for this specific role over completeness. If the original resume has more roles or bullets than fit, cut or condense the least relevant ones rather than shrinking type. Older or less relevant roles can be trimmed to one line.
+
 Style requested: ${style}
 
 Return the complete resume as plain text. Nothing before the candidate's name. Nothing after the last line of content.`,
@@ -235,16 +239,26 @@ Rules:
   return extractText(response).trim();
 }
 
-async function interviewPrep(resumeText, jobDescription) {
+async function interviewPrep(resumeText, jobDescription, interviewerName = '', interviewerRole = '') {
+  const hasInterviewer = Boolean(interviewerName || interviewerRole);
+  const interviewerBlock = hasInterviewer
+    ? `\n\nINTERVIEWER PROVIDED BY CANDIDATE:\n${interviewerName ? `Name: ${interviewerName}\n` : ''}${interviewerRole ? `Role/title: ${interviewerRole}\n` : ''}Search for this person's publicly available professional background (e.g. LinkedIn, company bio page, public talks or writing) and use anything relevant to sharpen the coaching. If search turns up nothing solid, say so plainly in interviewer_notes rather than guessing.`
+    : `\n\nNo interviewer was named. Use search to research the company and role generally instead — recent news, product focus, culture, anything that would sharpen the candidate's prep.`;
+
   const response = await createMessage({
     model: MODEL_STANDARD,
     max_tokens: 3000,
+    tools: [{ type: 'web_search_20260209', name: 'web_search' }],
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
       {
         type: 'text',
-        text: `Prepare this candidate for an interview for this specific role. Return ONLY valid JSON:
+        text: `Prepare this candidate for an interview for this specific role. You have a web_search tool — use it to research the company (recent news, product, culture) and, if named, the interviewer, using only publicly available professional information. Never fabricate what search does not surface; say plainly when nothing useful was found.
+
+After researching, return ONLY valid JSON matching this schema — no markdown fences, no text outside the JSON:
 {
+  "company_notes": "<1–2 sentences on anything current and relevant you found about the company. If search found nothing useful, write \\"No notable recent company information found.\\">",
+  "interviewer_notes": "<1–2 sentences on the interviewer if named and something was found. Empty string if no interviewer was named or nothing was found.>",
   "role_context": "<2–3 sentences on what this role actually needs and what will likely be evaluated>",
   "behavioral_questions": [
     { "question": "<question>", "what_they_want": "<what skill or value this is probing>", "coaching": "<specific tip for this candidate given their background>" }
@@ -262,7 +276,7 @@ Provide 4–5 behavioral questions, 3–4 technical questions, 4 questions to as
     messages: [
       {
         role: 'user',
-        content: `CANDIDATE RESUME:\n${resumeText}\n\n---\n\nJOB POSTING:\n${jobDescription}`,
+        content: `CANDIDATE RESUME:\n${resumeText}\n\n---\n\nJOB POSTING:\n${jobDescription}${interviewerBlock}`,
       },
     ],
   });
@@ -349,13 +363,15 @@ async function chat(messages, context = {}) {
         text: `You are the Apply Ready assistant — a helpful, direct support agent built into the Apply Ready app. Apply Ready is an AI career prep tool that helps job seekers evaluate their fit for roles, tailor their resumes and cover letters, prep for interviews, and track applications.
 
 HOW THE APP WORKS:
-- Discover tab: Job listings matched to the user's target roles and regions. Jobs only appear after target roles and regions are set in Profile and the feed is refreshed. "See my fit score" marks a job as Interested and opens the optimization flow.
+- Discover tab: AI-suggested roles based on the user's resume, with direct search links. Requires a resume on file first.
 - Interested tab: Jobs the user is actively working on. "Optimize + Apply" opens the full flow.
-- Submitted tab: Jobs already applied to, with interview tracking and journey notes.
+- Submitted tab: Jobs already applied to, with journey status tracking (phone screen, interviews, offer, etc.) and interview prep.
 - Optimization Flow (6 steps): Fit Score, Clarifying Questions, Updated Score, Tailored Resume, Cover Letter, Apply.
-- Profile: Set target roles, regions, resume style, compensation floor, and upload or replace a resume. The Discover tab will be empty until target roles and regions are filled in here.
+- Interview Prep: Available on any active job in the Submitted tab once its journey status is applied or later. The user can optionally name the interviewer and their role or title. If given, the AI searches for that person's public professional background to sharpen the coaching. If left blank, the AI researches the company and role generally instead. Produces behavioral and technical questions with coaching notes specific to the candidate, smart questions to ask, and watch-outs.
+- Post-interview debrief: Also on the Submitted tab, once a job reaches an interview stage. The user drops in their notes and gets an honest read on how it likely went.
+- Profile: Set target roles, regions, resume style, compensation floor, and upload or replace a resume. The Discover tab will be empty until a resume is uploaded.
 - Add a Job: Paste job text or upload a screenshot of any posting found anywhere.
-- Resume: Upload a PDF or Word doc, or paste text. The AI tailors it per job without modifying the original.
+- Resume: Upload a PDF or Word doc, or paste text. The AI tailors it per job without modifying the original. Tailored resumes and cover letters print as polished, ready-to-send documents, not plain text.
 - Fit Score: 0-100 score across Skills Match, Experience, Culture/Values, and Trajectory Fit.
 - Clarifying Questions: 3-5 targeted questions after the fit score to surface context the resume may not capture. Answers improve the score and feed into the tailored resume and cover letter.
 

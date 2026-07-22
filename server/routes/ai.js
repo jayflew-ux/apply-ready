@@ -223,15 +223,18 @@ router.post('/interview-prep/:userJobId', async (req, res, next) => {
     if (!resumeText) return res.status(400).json({ error: 'No active resume found' });
     if (!job) return res.status(404).json({ error: 'Job not found' });
 
-    const prep = await ai.interviewPrep(resumeText, job.description);
+    const { interviewer_name = '', interviewer_role = '' } = req.body || {};
+
+    const prep = await ai.interviewPrep(resumeText, job.description, interviewer_name, interviewer_role);
+    const stored = { ...prep, interviewer_name, interviewer_role };
 
     await req.db
       .from('user_jobs')
-      .update({ interview_prep: prep })
+      .update({ interview_prep: stored })
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id);
 
-    res.json(prep);
+    res.json(stored);
   } catch (err) {
     next(err);
   }

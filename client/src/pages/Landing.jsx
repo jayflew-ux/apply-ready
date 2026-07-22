@@ -25,7 +25,7 @@ const JOURNEY = [
     step: '04',
     label: 'Walk in ready',
     heading: 'Every question they might ask. Every watch-out.',
-    body: "Role-specific behavioral and technical questions with coaching notes calibrated to your background. Smart questions to ask them. A watch-out list of things your resume will make them probe.",
+    body: "Tell us who is interviewing you and their role, and the AI researches their public background to sharpen your prep. Don't know yet? It researches the company and role instead. Either way you get behavioral and technical questions, coaching calibrated to your background, and a watch-out list of what your resume will make them probe.",
   },
   {
     step: '05',

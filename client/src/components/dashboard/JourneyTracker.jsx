@@ -3,6 +3,8 @@ import { api } from '../../lib/api';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import Modal from '../ui/Modal';
+import Input from '../ui/Input';
+import Spinner from '../ui/Spinner';
 
 const JOURNEY_STEPS = [
   { value: 'applied',               label: 'Applied',           variant: 'gray' },
@@ -40,10 +42,11 @@ export default function JourneyTracker({
   const [prepOpen, setPrepOpen]     = useState(false);
   const [debriefOpen, setDebrief]   = useState(false);
   const [prepData, setPrepData]     = useState(interviewPrep || null);
+  const [interviewerName, setIName] = useState(interviewPrep?.interviewer_name || '');
+  const [interviewerRole, setIRole] = useState(interviewPrep?.interviewer_role || '');
   const [debriefData, setDebriefD]  = useState(postInterviewDebrief || null);
   const [interviewNotes, setIN]     = useState('');
   const [loadingPrep, setLP]        = useState(false);
-  const [loadingDebrief, setLD]     = useState(false);
   const [debriefSubmitting, setDS]  = useState(false);
 
   const currentStep = JOURNEY_STEPS.find(s => s.value === (journeyStatus || 'applied'));
@@ -56,13 +59,14 @@ export default function JourneyTracker({
     setOpen(false);
   }
 
-  async function loadInterviewPrep() {
-    if (prepData) { setPrepOpen(true); return; }
+  async function generatePrep() {
     setLP(true);
-    const data = await api.ai.interviewPrep(userJobId);
+    const data = await api.ai.interviewPrep(userJobId, {
+      interviewer_name: interviewerName.trim(),
+      interviewer_role: interviewerRole.trim(),
+    });
     setPrepData(data);
     setLP(false);
-    setPrepOpen(true);
   }
 
   async function submitDebrief() {
@@ -87,10 +91,10 @@ export default function JourneyTracker({
         </button>
         {isActive && (
           <button
-            onClick={loadInterviewPrep}
+            onClick={() => setPrepOpen(true)}
             className="font-lora text-xs text-copper hover:text-copper/80 underline-offset-2 hover:underline transition-colors"
           >
-            {loadingPrep ? 'Loading...' : 'Interview prep'}
+            Interview prep
           </button>
         )}
         {(journeyStatus === 'first-interview' || journeyStatus === 'subsequent-interview' || journeyStatus === 'final-round') && (
@@ -130,8 +134,58 @@ export default function JourneyTracker({
 
       {/* Interview prep modal */}
       <Modal open={prepOpen} onClose={() => setPrepOpen(false)} title="Interview prep" wide>
-        {prepData ? (
+        {!prepData && !loadingPrep && (
+          <div className="flex flex-col gap-5">
+            <p className="font-lora text-sm text-ink/60 leading-relaxed">
+              Know who's interviewing you? Tell us their name and role and the AI will look up their public professional background to sharpen your prep. Leave it blank and it will research the company and role instead.
+            </p>
+            <Input
+              label="Interviewer name (optional)"
+              placeholder="e.g. Jordan Reyes"
+              value={interviewerName}
+              onChange={e => setIName(e.target.value)}
+            />
+            <Input
+              label="Interviewer role or title (optional)"
+              placeholder="e.g. Engineering Manager"
+              value={interviewerRole}
+              onChange={e => setIRole(e.target.value)}
+            />
+            <Button onClick={generatePrep} loading={loadingPrep}>
+              Generate my interview prep
+            </Button>
+          </div>
+        )}
+
+        {loadingPrep && (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <Spinner size="lg" />
+            <p className="font-lora text-sm text-ink/60">Researching and building your prep...</p>
+          </div>
+        )}
+
+        {prepData && !loadingPrep && (
           <div className="flex flex-col gap-6">
+            {(prepData.interviewer_name || prepData.interviewer_role) && (
+              <p className="font-lora text-xs text-ink/50 italic">
+                Prepped for your conversation with {[prepData.interviewer_name, prepData.interviewer_role].filter(Boolean).join(', ')}.
+              </p>
+            )}
+
+            {prepData.company_notes && (
+              <div>
+                <p className="font-montserrat text-xs uppercase tracking-widest text-teal mb-2">About the company right now</p>
+                <p className="font-lora text-sm text-ink/80 leading-relaxed">{prepData.company_notes}</p>
+              </div>
+            )}
+
+            {prepData.interviewer_notes && (
+              <div>
+                <p className="font-montserrat text-xs uppercase tracking-widest text-copper mb-2">About your interviewer</p>
+                <p className="font-lora text-sm text-ink/80 leading-relaxed">{prepData.interviewer_notes}</p>
+              </div>
+            )}
+
             {prepData.role_context && (
               <div>
                 <p className="font-montserrat text-xs uppercase tracking-widest text-copper mb-2">What this role needs</p>
@@ -194,10 +248,13 @@ export default function JourneyTracker({
                 </ul>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center py-8 gap-3">
-            <span className="font-lora text-sm text-ink/60">Loading prep...</span>
+
+            <button
+              onClick={() => setPrepData(null)}
+              className="font-lora text-xs text-ink/40 hover:text-ink/60 underline-offset-2 hover:underline self-start"
+            >
+              Prep again with different interviewer info
+            </button>
           </div>
         )}
       </Modal>

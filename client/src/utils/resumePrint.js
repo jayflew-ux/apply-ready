@@ -1,79 +1,64 @@
 /**
- * Parses Claude's plain-text resume output and opens a styled print window.
- * Handles: name, contact line, ALL-CAPS section headers,
- * "Title | Company | Location | Date" job rows, bullets, and body text.
+ * Renders Claude's plain-text resume and cover letter output as a styled,
+ * print-ready document — matching the app's Montserrat/Lora, teal/copper/gold
+ * brand system. One consistent premium template regardless of the style the
+ * user picked in Profile (that setting shapes the AI's word choice and
+ * section emphasis, not the visual template).
  */
 
-const SECTION_RE = /^(PROFESSIONAL SUMMARY|SUMMARY|EXPERIENCE|WORK HISTORY|PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CERTIFICATIONS|PROJECTS|AWARDS|PUBLICATIONS|VOLUNTEERING|LANGUAGES|OBJECTIVE)$/i;
+import { classifyLine, parseResumeHeader } from './resumeText';
 
-function isBullet(line) {
-  return /^[\s]*[•\-\*]/.test(line);
-}
+const FONT_LINK = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap';
 
-function isJobRow(line) {
-  return (line.match(/\|/g) || []).length >= 2;
-}
+const TEAL = '#1e8b8b';
+const TEAL_DEEPER = '#0d3535';
+const COPPER = '#c87b33';
+const GOLD = '#edcf30';
+const INK = '#2c2c2c';
 
-function parseLine(line) {
-  const t = line.trim();
-  if (!t) return { type: 'blank' };
-  if (SECTION_RE.test(t)) return { type: 'heading', text: t };
-  if (isJobRow(t)) return { type: 'jobrow', text: t };
-  if (isBullet(t)) return { type: 'bullet', text: t.replace(/^[\s•\-\*]+/, '') };
-  return { type: 'body', text: t };
-}
-
-function buildHTML(text) {
+function buildResumeHTML(text) {
   const rawLines = text.split('\n');
-  const parsed = rawLines.map(parseLine);
+  const parsed = rawLines.map(classifyLine);
 
-  // First non-blank line = name, second = contact (if it has @ or | or digits)
-  let nameIdx = -1;
-  let contactIdx = -1;
+  let nameIdx = -1, contactIdx = -1;
   for (let i = 0; i < parsed.length; i++) {
     if (parsed[i].type === 'body') {
       if (nameIdx === -1) { nameIdx = i; continue; }
-      if (contactIdx === -1) {
-        const t = parsed[i].text;
-        if (t.includes('@') || t.includes('|') || /\d{3}/.test(t)) {
-          contactIdx = i;
-        }
-        break;
-      }
+      const t = parsed[i].text;
+      if (t.includes('@') || t.includes('|') || /\d{3}/.test(t)) contactIdx = i;
+      break;
     }
     if (parsed[i].type !== 'blank') break;
   }
 
   let html = '';
 
-  // Header block
   if (nameIdx >= 0) {
     html += `<div class="resume-header">`;
     html += `<div class="resume-name">${parsed[nameIdx].text}</div>`;
+    html += `<div class="header-rule"></div>`;
     if (contactIdx >= 0) {
       html += `<div class="resume-contact">${parsed[contactIdx].text}</div>`;
     }
     html += `</div>`;
   }
 
-  // Body — collect bullets into lists
   let inList = false;
+  let sectionOpen = false;
 
   for (let i = 0; i < parsed.length; i++) {
     if (i === nameIdx || i === contactIdx) continue;
-
     const p = parsed[i];
 
-    if (p.type !== 'bullet' && inList) {
-      html += '</ul>';
-      inList = false;
-    }
+    if (p.type !== 'bullet' && inList) { html += '</ul>'; inList = false; }
 
     switch (p.type) {
       case 'blank':
         break;
       case 'heading':
-        html += `<div class="section-heading">${p.text}</div>`;
+        if (sectionOpen) html += '</div>';
+        html += `<div class="section"><div class="section-heading"><span>${p.text}</span></div>`;
+        sectionOpen = true;
         break;
       case 'jobrow': {
         const parts = p.text.split('|').map(s => s.trim());
@@ -91,57 +76,59 @@ function buildHTML(text) {
         break;
     }
   }
-
   if (inList) html += '</ul>';
+  if (sectionOpen) html += '</div>';
 
   return html;
 }
 
-const CSS = `
+const RESUME_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
-    font-family: Georgia, 'Times New Roman', serif;
-    color: #1a1a1a;
-    font-size: 10.5pt;
-    line-height: 1.55;
+    font-family: 'Lora', Georgia, serif;
+    color: ${INK};
+    font-size: 10.25pt;
+    line-height: 1.42;
     background: #fff;
+    -webkit-font-smoothing: antialiased;
   }
-  .page {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 52px 60px;
-  }
-  .resume-header {
-    margin-bottom: 22px;
-    padding-bottom: 14px;
-    border-bottom: 2px solid #1e8b8b;
-  }
+  .page { max-width: 740px; margin: 0 auto; padding: 46px 54px; }
+  .resume-header { margin-bottom: 18px; }
   .resume-name {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 22pt;
-    font-weight: 700;
-    color: #0d3535;
-    letter-spacing: -0.3px;
-    line-height: 1.15;
-    margin-bottom: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 25pt;
+    font-weight: 800;
+    color: ${TEAL_DEEPER};
+    letter-spacing: -0.4px;
+    line-height: 1.1;
+  }
+  .header-rule {
+    height: 2px;
+    margin: 9px 0 8px;
+    background: linear-gradient(to right, ${COPPER}, ${GOLD}, transparent 85%);
   }
   .resume-contact {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 9pt;
-    color: #555;
-    letter-spacing: 0.2px;
-  }
-  .section-heading {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Montserrat', sans-serif;
     font-size: 8.5pt;
+    font-weight: 500;
+    color: #5a5a55;
+    letter-spacing: 0.3px;
+  }
+  .section { break-inside: avoid-page; margin-bottom: 2px; }
+  .section-heading {
+    margin-top: 15px;
+    margin-bottom: 8px;
+  }
+  .section-heading span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8pt;
     font-weight: 700;
-    color: #1e8b8b;
+    color: ${TEAL};
     text-transform: uppercase;
-    letter-spacing: 2px;
-    border-bottom: 1px solid #1e8b8b;
+    letter-spacing: 2.2px;
     padding-bottom: 4px;
-    margin-top: 22px;
-    margin-bottom: 10px;
+    border-bottom: 1.5px solid ${TEAL};
+    display: inline-block;
   }
   .job-row {
     display: flex;
@@ -149,112 +136,152 @@ const CSS = `
     align-items: baseline;
     flex-wrap: wrap;
     gap: 4px;
-    margin-top: 10px;
-    margin-bottom: 4px;
+    margin-top: 9px;
+    margin-bottom: 3px;
+    break-inside: avoid;
+    break-after: avoid;
   }
   .job-title {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10.5pt;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10pt;
     font-weight: 700;
-    color: #1a1a1a;
+    color: ${INK};
   }
   .job-meta {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 9pt;
-    color: #666;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8.25pt;
+    font-weight: 500;
+    color: ${COPPER};
     text-align: right;
   }
-  .bullet-list {
-    margin-left: 18px;
-    margin-top: 3px;
-    margin-bottom: 6px;
-  }
+  .bullet-list { margin-left: 16px; margin-top: 2px; margin-bottom: 5px; }
   .bullet-list li {
-    margin-bottom: 3px;
-    padding-left: 2px;
+    margin-bottom: 2.5px;
+    padding-left: 3px;
+    break-inside: avoid;
   }
-  p {
-    margin-bottom: 5px;
-  }
+  .bullet-list li::marker { color: ${COPPER}; }
+  p { margin-bottom: 4px; }
   @media print {
     html, body { background: white; }
     .page { padding: 0; max-width: 100%; }
-    @page { margin: 0.75in 0.85in; size: letter; }
+    @page { margin: 0.6in 0.7in; size: letter; }
   }
 `;
 
-export function printResume(text, jobTitle = '', company = '') {
-  const body   = buildHTML(text);
-  const docTitle = [jobTitle, company].filter(Boolean).join(' — ') || 'Resume';
-
+function openPrintWindow(title, bodyHTML, css) {
   const win = window.open('', '_blank', 'width=900,height=1100');
   if (!win) {
     alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
     return;
   }
-
   win.document.write(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${docTitle}</title>
-  <style>${CSS}</style>
+  <title>${title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="${FONT_LINK}" rel="stylesheet" />
+  <style>${css}</style>
 </head>
 <body>
-  <div class="page">${body}</div>
+  <div class="page">${bodyHTML}</div>
   <script>
-    window.onload = function() { window.print(); };
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function() { window.print(); });
+    } else {
+      window.onload = function() { window.print(); };
+    }
   <\/script>
 </body>
 </html>`);
   win.document.close();
 }
 
-export function printCoverLetter(text, jobTitle = '', company = '') {
+export function printResume(text, jobTitle = '', company = '') {
+  const body = buildResumeHTML(text);
+  const docTitle = [jobTitle, company].filter(Boolean).join(' — ') || 'Resume';
+  openPrintWindow(docTitle, body, RESUME_CSS);
+}
+
+/**
+ * Wraps the AI's cover letter body (which intentionally excludes date,
+ * address, and signature) with a letterhead, date, salutation, and
+ * signoff — so what prints is a complete, ready-to-send letter rather
+ * than a bare paragraph of text.
+ */
+export function printCoverLetter(text, jobTitle = '', company = '', resumeText = '') {
+  const { name, contact } = parseResumeHeader(resumeText);
   const docTitle = [jobTitle, company].filter(Boolean).join(' — ') || 'Cover Letter';
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const salutation = company ? `Dear ${company} Hiring Team,` : 'Dear Hiring Team,';
+
   const paragraphs = text.split(/\n\n+/).filter(Boolean);
-  const bodyHTML = paragraphs.map(p =>
-    `<p>${p.replace(/\n/g, '<br/>')}</p>`
-  ).join('');
+  const bodyHTML = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br/>')}</p>`).join('');
 
-  const win = window.open('', '_blank', 'width=900,height=1100');
-  if (!win) {
-    alert('Pop-up blocked. Please allow pop-ups for this site and try again.');
-    return;
-  }
-
-  win.document.write(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>${docTitle}</title>
-  <style>
+  const css = `
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
-      font-family: Georgia, 'Times New Roman', serif;
-      color: #1a1a1a;
+      font-family: 'Lora', Georgia, serif;
+      color: ${INK};
       font-size: 11pt;
-      line-height: 1.7;
+      line-height: 1.65;
       background: #fff;
+      -webkit-font-smoothing: antialiased;
     }
-    .page {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 60px 60px;
+    .page { max-width: 680px; margin: 0 auto; padding: 56px 60px; }
+    .letter-header { margin-bottom: 30px; }
+    .letter-name {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16pt;
+      font-weight: 800;
+      color: ${TEAL_DEEPER};
+      letter-spacing: -0.2px;
     }
-    p { margin-bottom: 18px; }
+    .letter-contact {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 8.5pt;
+      font-weight: 500;
+      color: #5a5a55;
+      letter-spacing: 0.3px;
+      margin-top: 3px;
+    }
+    .header-rule {
+      height: 2px;
+      margin: 12px 0 0;
+      background: linear-gradient(to right, ${COPPER}, ${GOLD}, transparent 85%);
+    }
+    .letter-date { font-size: 10pt; color: #6a6a65; margin-bottom: 22px; }
+    .salutation { margin-bottom: 16px; font-weight: 500; }
+    p { margin-bottom: 16px; }
+    .signoff { margin-top: 8px; }
+    .signoff .name {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      color: ${TEAL_DEEPER};
+      margin-top: 26px;
+    }
     @media print {
       .page { padding: 0; max-width: 100%; }
-      @page { margin: 1in 1in; size: letter; }
+      @page { margin: 0.85in 1in; size: letter; }
     }
-  </style>
-</head>
-<body>
-  <div class="page">${bodyHTML}</div>
-  <script>
-    window.onload = function() { window.print(); };
-  <\/script>
-</body>
-</html>`);
-  win.document.close();
+  `;
+
+  const html = `
+    <div class="letter-header">
+      ${name ? `<div class="letter-name">${name}</div>` : ''}
+      ${contact ? `<div class="letter-contact">${contact}</div>` : ''}
+      <div class="header-rule"></div>
+    </div>
+    <div class="letter-date">${today}</div>
+    <div class="salutation">${salutation}</div>
+    ${bodyHTML}
+    <div class="signoff">
+      <p style="margin-bottom:2px;">Sincerely,</p>
+      ${name ? `<p class="name">${name}</p>` : ''}
+    </div>
+  `;
+
+  openPrintWindow(docTitle, html, css);
 }

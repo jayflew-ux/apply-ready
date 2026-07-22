@@ -1,21 +1,9 @@
 /**
- * Renders a plain-text Claude resume as styled HTML inline in the app.
- * Mirrors the logic in resumePrint.js but outputs React elements.
+ * Renders a plain-text Claude resume as a polished, on-screen preview that
+ * matches the printed output — one premium visual template regardless of
+ * the style selected in Profile (style shapes wording/emphasis, not looks).
  */
-
-const SECTION_RE = /^(PROFESSIONAL SUMMARY|SUMMARY|EXPERIENCE|WORK HISTORY|PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CERTIFICATIONS|PROJECTS|AWARDS|PUBLICATIONS|VOLUNTEERING|LANGUAGES|OBJECTIVE)$/i;
-
-function isBullet(line) { return /^[\s]*[•\-\*]/.test(line); }
-function isJobRow(line) { return (line.match(/\|/g) || []).length >= 2; }
-
-function classifyLine(line) {
-  const t = line.trim();
-  if (!t) return { type: 'blank', text: '' };
-  if (SECTION_RE.test(t)) return { type: 'heading', text: t };
-  if (isJobRow(t)) return { type: 'jobrow', text: t };
-  if (isBullet(t)) return { type: 'bullet', text: t.replace(/^[\s•\-\*]+/, '') };
-  return { type: 'body', text: t };
-}
+import { classifyLine } from '../../utils/resumeText';
 
 export default function ResumePreview({ text }) {
   if (!text) return null;
@@ -23,7 +11,6 @@ export default function ResumePreview({ text }) {
   const lines  = text.split('\n');
   const parsed = lines.map(classifyLine);
 
-  // Find name + contact
   let nameIdx = -1, contactIdx = -1;
   for (let i = 0; i < parsed.length; i++) {
     if (parsed[i].type === 'body') {
@@ -37,30 +24,29 @@ export default function ResumePreview({ text }) {
 
   const elements = [];
 
-  // Header
   if (nameIdx >= 0) {
     elements.push(
-      <div key="header" className="pb-4 mb-5 border-b-2 border-teal">
-        <p className="font-montserrat font-bold text-2xl text-teal-deeper leading-tight">
+      <div key="header" className="pb-3 mb-4">
+        <p className="font-montserrat font-extrabold text-3xl text-teal-deeper leading-tight tracking-tight">
           {parsed[nameIdx].text}
         </p>
+        <div className="h-[2.5px] mt-2 mb-2 rounded-full" style={{ background: 'linear-gradient(to right, #c87b33, #edcf30, transparent 85%)' }} />
         {contactIdx >= 0 && (
-          <p className="font-lora text-xs text-ink/50 mt-1">{parsed[contactIdx].text}</p>
+          <p className="font-montserrat text-[10px] font-medium text-ink/50 tracking-wide">{parsed[contactIdx].text}</p>
         )}
       </div>
     );
   }
 
-  // Body
   let bullets = [];
   let key = 0;
 
   function flushBullets() {
     if (!bullets.length) return;
     elements.push(
-      <ul key={`ul-${key++}`} className="ml-4 mb-3 flex flex-col gap-1">
+      <ul key={`ul-${key++}`} className="ml-4 mb-2 flex flex-col gap-1">
         {bullets.map((b, i) => (
-          <li key={i} className="font-lora text-xs text-ink/80 leading-relaxed list-disc">{b}</li>
+          <li key={i} className="font-lora text-xs text-ink/80 leading-relaxed marker:text-copper" style={{ listStyleType: 'disc' }}>{b}</li>
         ))}
       </ul>
     );
@@ -79,8 +65,8 @@ export default function ResumePreview({ text }) {
 
       case 'heading':
         elements.push(
-          <div key={`h-${key++}`} className="mt-5 mb-2.5 pb-1 border-b border-teal/40">
-            <span className="font-montserrat font-bold text-[10px] uppercase tracking-[2px] text-teal">
+          <div key={`h-${key++}`} className="mt-4 mb-2">
+            <span className="font-montserrat font-bold text-[9px] uppercase tracking-[2.5px] text-teal pb-1 border-b-[1.5px] border-teal inline-block">
               {p.text}
             </span>
           </div>
@@ -92,9 +78,9 @@ export default function ResumePreview({ text }) {
         const title = parts[0] || '';
         const meta  = parts.slice(1).join(' · ');
         elements.push(
-          <div key={`jr-${key++}`} className="flex items-baseline justify-between flex-wrap gap-x-3 mt-3 mb-1">
+          <div key={`jr-${key++}`} className="flex items-baseline justify-between flex-wrap gap-x-3 mt-2.5 mb-1">
             <span className="font-montserrat font-bold text-xs text-ink">{title}</span>
-            <span className="font-lora text-[10px] text-ink/50">{meta}</span>
+            <span className="font-montserrat text-[9px] font-medium text-copper">{meta}</span>
           </div>
         );
         break;
@@ -106,7 +92,7 @@ export default function ResumePreview({ text }) {
 
       case 'body':
         elements.push(
-          <p key={`p-${key++}`} className="font-lora text-xs text-ink/80 leading-relaxed mb-1.5">
+          <p key={`p-${key++}`} className="font-lora text-xs text-ink/80 leading-relaxed mb-1">
             {p.text}
           </p>
         );
@@ -116,7 +102,7 @@ export default function ResumePreview({ text }) {
   flushBullets();
 
   return (
-    <div className="bg-white rounded-sm border border-[#e5e5e0] p-6 text-left">
+    <div className="bg-white rounded-sm border border-[#e5e5e0] shadow-sm p-8 text-left">
       {elements}
     </div>
   );

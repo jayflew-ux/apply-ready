@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { PrinterIcon } from '@heroicons/react/24/outline';
 import { api } from '../../lib/api';
 import { printResume, printCoverLetter } from '../../utils/resumePrint';
+import { estimateResumePages } from '../../utils/resumeText';
 import FitScoreReport from './FitScoreReport';
 import ResumePreview from './ResumePreview';
+import CoverLetterPreview from './CoverLetterPreview';
 import Button from '../ui/Button';
 import Spinner from '../ui/Spinner';
 import { Textarea } from '../ui/Input';
@@ -232,7 +234,9 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                 <ResumePreview text={resumeText} />
               </div>
               <p className="font-lora text-xs text-ink/40">
-                Looks good? Print it as a PDF or move on to your cover letter.
+                {estimateResumePages(resumeText) > 2
+                  ? 'This is running long and may print past two pages. You can still continue, or answer the earlier questions more concisely and regenerate.'
+                  : 'Looks good? Print it as a PDF or move on to your cover letter.'}
               </p>
               <div className="flex gap-3 flex-wrap">
                 <Button
@@ -265,14 +269,17 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
 
           {letterText && (
             <>
-              <div className="bg-white border border-[#e5e5e0] rounded-sm p-5 max-h-80 overflow-y-auto">
-                <div className="font-lora text-sm text-ink/80 leading-relaxed whitespace-pre-wrap">{letterText}</div>
+              <div className="max-h-[480px] overflow-y-auto rounded-sm">
+                <CoverLetterPreview text={letterText} company={job?.company} resumeText={resumeText} />
               </div>
+              <p className="font-lora text-xs text-ink/40">
+                This is formatted and ready to send — download it as a PDF and attach it directly.
+              </p>
               <div className="flex gap-3 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => printCoverLetter(letterText, job?.title, job?.company)}
+                  onClick={() => printCoverLetter(letterText, job?.title, job?.company, resumeText)}
                 >
                   <PrinterIcon className="w-4 h-4" /> Print / Save as PDF
                 </Button>
@@ -299,7 +306,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
               </Button>
             )}
             {letterText && (
-              <Button variant="outline" onClick={() => printCoverLetter(letterText, job?.title, job?.company)}>
+              <Button variant="outline" onClick={() => printCoverLetter(letterText, job?.title, job?.company, resumeText)}>
                 <PrinterIcon className="w-4 h-4" /> Print cover letter as PDF
               </Button>
             )}
