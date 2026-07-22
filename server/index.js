@@ -45,6 +45,17 @@ app.use('/api/admin',     require('./routes/admin'));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
+// TEMP diagnostic — reports only presence/shape of the key, never the value.
+app.get('/debug/env', (_req, res) => {
+  const k = process.env.ANTHROPIC_API_KEY || '';
+  res.json({
+    ANTHROPIC_API_KEY_present: k.length > 0,
+    ANTHROPIC_API_KEY_length: k.length,
+    ANTHROPIC_API_KEY_prefix: k.slice(0, 12),
+    deployedAt: new Date().toISOString(),
+  });
+});
+
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
