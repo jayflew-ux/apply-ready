@@ -2,6 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+// Keep the server alive if a library (e.g. the PDF parser) throws an async
+// error the route handler can't catch. Log it instead of crashing the process,
+// which would drop every in-flight request and show users "load failed".
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception (kept alive):', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection (kept alive):', reason);
+});
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 

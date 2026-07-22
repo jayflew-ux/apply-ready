@@ -16,25 +16,45 @@ async function parseBuffer(buffer, mimetype) {
 }
 
 async function parsePDF(buffer) {
-  const data = await pdf(buffer);
-  const text = data.text
+  let data;
+  try {
+    // Guard against a parse that hangs or throws deep in pdf.js
+    data = await Promise.race([
+      pdf(buffer),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('PDF_TIMEOUT')), 20000),
+      ),
+    ]);
+  } catch (err) {
+    if (err.message === 'PDF_TIMEOUT') {
+      return { text: '', warning: 'That PDF took too long to read. Please try the "Paste text" option instead.' };
+    }
+    return { text: '', warning: 'We could not read that PDF. It may be secured or unusual. Please try the "Paste text" option instead.' };
+  }
+
+  const text = (data.text || '')
     .replace(/\r\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   if (!text || text.length < 50) {
-    throw new Error('PDF appears to contain no extractable text. If it is a scanned image, please copy and paste your resume text instead.');
+    return { text: '', warning: 'This PDF appears to contain no extractable text. If it is a scanned image, please copy and paste your resume text instead.' };
   }
   return { text, pages: data.numpages };
 }
 
 async function parseDOCX(buffer) {
-  const result = await mammoth.extractRawText({ buffer });
-  const text = result.value
+  let result;
+  try {
+    result = await mammoth.extractRawText({ buffer });
+  } catch {
+    return { text: '', warning: 'We could not read that Word document. Please try the "Paste text" option instead.' };
+  }
+  const text = (result.value || '')
     .replace(/\r\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   if (!text || text.length < 50) {
-    throw new Error('Document appears to be empty or unreadable. Please copy and paste your resume text instead.');
+    return { text: '', warning: 'This document appears to be empty or unreadable. Please copy and paste your resume text instead.' };
   }
   return { text };
 }
