@@ -1,4 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const { recordUsage } = require('../lib/usage');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // Tiered models — match cost to task value
@@ -10,15 +11,17 @@ const FALLBACK_MODEL = 'claude-opus-4-8';
 // Fable 5 calls go through the beta endpoint so a safety-classifier decline
 // automatically retries on Opus 4.8 in the same request. Other models use the
 // standard endpoint.
-function createMessage(params) {
-  if (params.model === MODEL_PREMIUM) {
-    return client.beta.messages.create({
-      ...params,
-      betas: ['server-side-fallback-2026-06-01'],
-      fallbacks: [{ model: FALLBACK_MODEL }],
-    });
-  }
-  return client.messages.create(params);
+async function createMessage(params) {
+  const response = params.model === MODEL_PREMIUM
+    ? await client.beta.messages.create({
+        ...params,
+        betas: ['server-side-fallback-2026-06-01'],
+        fallbacks: [{ model: FALLBACK_MODEL }],
+      })
+    : await client.messages.create(params);
+
+  recordUsage(response.usage);
+  return response;
 }
 
 // Fable 5 always reasons internally, so responses can contain thinking blocks

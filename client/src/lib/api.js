@@ -99,6 +99,9 @@ export const api = {
     resume:      (id)  => request('POST', `/documents/resume/${id}`, {}),
     coverLetter: (id)  => request('POST', `/documents/cover-letter/${id}`, {}),
   },
+  admin: {
+    users: () => api.get('/admin/users'),
+  },
 };
 
 export function downloadBlob(blob, filename) {

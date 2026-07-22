@@ -7,6 +7,7 @@ import Auth       from './pages/Auth';
 import Onboarding from './pages/Onboarding';
 import Dashboard  from './pages/Dashboard';
 import Profile    from './pages/Profile';
+import Admin      from './pages/Admin';
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/onboarding" element={<RequireAuth><AuthLayout><Onboarding /></AuthLayout></RequireAuth>} />
           <Route path="/dashboard"  element={<RequireAuth><AuthLayout><Dashboard /></AuthLayout></RequireAuth>} />
           <Route path="/profile"    element={<RequireAuth><AuthLayout><Profile /></AuthLayout></RequireAuth>} />
+          <Route path="/admin"      element={<RequireAuth><Admin /></RequireAuth>} />
           <Route path="*"           element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

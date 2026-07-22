@@ -23,11 +23,15 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Tally Anthropic token usage per request and flush to the user's profile
+app.use(require('./middleware/trackUsage'));
+
 app.use('/api/profile',   require('./routes/profile'));
 app.use('/api/resume',    require('./routes/resume'));
 app.use('/api/jobs',      require('./routes/jobs'));
 app.use('/api/ai',        require('./routes/ai'));
 app.use('/api/documents', require('./routes/documents'));
+app.use('/api/admin',     require('./routes/admin'));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 

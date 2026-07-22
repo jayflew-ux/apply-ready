@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [loading, setLoading]   = useState(true);
   const [addOpen, setAddOpen]   = useState(false);
   const [hasResume, setHasResume] = useState(null); // null = still checking
+  const [isAdmin, setIsAdmin]   = useState(false);
 
   // Keep chat context in sync with active tab
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     api.profile.get().then(p => {
+      setIsAdmin(Boolean(p.is_admin));
       if (!p.onboarding_complete) {
         navigate('/onboarding', { replace: true });
         return;
@@ -94,6 +96,11 @@ export default function Dashboard() {
 
             <div className="w-px h-4 bg-[#e5e5e0] mx-1" />
 
+            {isAdmin && (
+              <Link to="/admin" className="font-lora text-sm text-copper hover:text-teal transition-colors">
+                Admin
+              </Link>
+            )}
             <Link to="/profile" className="font-lora text-sm text-ink/50 hover:text-ink transition-colors">
               Profile
             </Link>
