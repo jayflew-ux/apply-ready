@@ -45,6 +45,18 @@ app.use('/api/admin',     require('./routes/admin'));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
+// TEMP diagnostic — reports only whether each env var is present, never its value.
+app.get('/debug/env', (_req, res) => {
+  const present = (v) => Boolean(process.env[v] && process.env[v].length > 0);
+  res.json({
+    SUPABASE_URL: present('SUPABASE_URL'),
+    SUPABASE_SERVICE_KEY: present('SUPABASE_SERVICE_KEY'),
+    SUPABASE_ANON_KEY: present('SUPABASE_ANON_KEY'),
+    ANTHROPIC_API_KEY: present('ANTHROPIC_API_KEY'),
+    anon_key_length: process.env.SUPABASE_ANON_KEY ? process.env.SUPABASE_ANON_KEY.length : 0,
+  });
+});
+
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
