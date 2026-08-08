@@ -152,7 +152,7 @@ export default function Dashboard() {
         </div>
 
         <div className="py-6">
-          {tab === 'Discover'   && <DiscoverTab hasResume={hasResume} />}
+          {tab === 'Discover'   && <DiscoverTab hasResume={hasResume} onJobAdded={() => { loadData(); setTab('Interested'); }} />}
           {tab === 'Interested' && <InterestedTab jobs={jobs} loading={loading} onStatusChange={handleStatusChange} />}
           {tab === 'Submitted'  && <SubmittedTab  jobs={submitted} loading={loading} onJourneyUpdate={handleJourneyUpdate} />}
         </div>

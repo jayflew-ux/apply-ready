@@ -6,8 +6,8 @@ const JOURNEY = [
   {
     step: '01',
     label: 'Know what fits',
-    heading: 'Discover roles built for your background.',
-    body: "Upload your resume and Dream Job Ready tells you exactly what roles you are positioned for — with the specific reason why, and where to find open listings. No guessing. No spray and pray.",
+    heading: 'Real listings, honestly scored.',
+    body: "Upload your resume and Dream Job Ready shows you the roles you are positioned for, then finds live, current job listings and scores each one 0 to 100 against your actual background. One click starts your application prep. No guessing. No spray and pray.",
   },
   {
     step: '02',
@@ -138,6 +138,9 @@ export default function Landing() {
         </h2>
         <p className="font-lora text-base text-ink/70 leading-relaxed max-w-2xl mx-auto">
           Dream Job Ready never invents a skill, title, metric, or outcome you have not documented. If a role requires something you do not have, the AI says so plainly and helps you decide what to do with that information. This is not a resume inflation machine. It is a preparation machine.
+        </p>
+        <p className="font-lora text-base text-ink/70 leading-relaxed max-w-2xl mx-auto mt-5">
+          And you stay in control. Nothing is ever sent anywhere without you — no mass auto-apply, no spraying your resume across the internet. Five sharp, prepared applications beat fifty sprayed ones, and every document is yours to review before it goes out the door.
         </p>
       </section>
 

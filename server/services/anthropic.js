@@ -78,7 +78,7 @@ async function extractTextFromImage(imageBuffer, mimeType) {
 async function fitScore(resumeText, jobDescription) {
   const response = await createMessage({
     model: MODEL_STANDARD,
-    max_tokens: 1500,
+    max_tokens: 2000,
     system: [
       {
         type: 'text',
@@ -99,9 +99,15 @@ async function fitScore(resumeText, jobDescription) {
   "why_this_score": "<3–5 honest sentences explaining the score>",
   "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
   "gaps": ["<gap 1>", "<gap 2>", "<gap 3>"],
+  "keyword_coverage": {
+    "covered": ["<important keyword or skill from the posting that the resume already shows>"],
+    "missing": ["<important keyword or skill from the posting absent from the resume>"]
+  },
   "verdict": "<one of: I'd submit you | I'd coach you first, then submit | I wouldn't submit you for this role>",
   "verdict_reason": "<1–2 sentences explaining the verdict>"
-}`,
+}
+
+For keyword_coverage, pick the 8-14 terms an applicant tracking system or screening recruiter would actually scan for in THIS posting (skills, tools, certifications, domain terms). List each under covered or missing based on the resume. Do not pad either list.`,
       },
     ],
     messages: [
@@ -363,7 +369,9 @@ async function chat(messages, context = {}) {
         text: `You are the Apply Ready assistant — a helpful, direct support agent built into the Apply Ready app. Apply Ready is an AI career prep tool that helps job seekers evaluate their fit for roles, tailor their resumes and cover letters, prep for interviews, and track applications.
 
 HOW THE APP WORKS:
-- Discover tab: AI-suggested roles based on the user's resume, with direct search links. Requires a resume on file first.
+- Discover tab: AI-suggested roles based on the user's resume, plus live job listings found by real web search, each with a 0-100 match score and a one-click "Prep this application" button. Requires a resume on file first. Listings refresh on demand and are cached for a few hours.
+- Keyword coverage: every fit score includes an ATS-style keyword panel showing which terms from the posting the resume covers and which are missing. Missing keywords only get woven into the tailored resume where the user's real experience supports them.
+- Follow-up nudges: on the Submitted tab, applications sitting at "Applied" for 5+ days show a reminder that a short follow-up note can revive them.
 - Interested tab: Jobs the user is actively working on. "Optimize + Apply" opens the full flow.
 - Submitted tab: Jobs already applied to, with journey status tracking (phone screen, interviews, offer, etc.) and interview prep.
 - Optimization Flow (6 steps): Fit Score, Clarifying Questions, Updated Score, Tailored Resume, Cover Letter, Apply.
@@ -383,6 +391,63 @@ TONE: Warm, direct, specific. Short answers unless depth is needed. No jargon.${
   });
 
   return extractText(response).trim();
+}
+
+async function findListings(resumeText, profile = {}) {
+  const prefs = [
+    profile.target_roles?.length ? `Target roles: ${profile.target_roles.join(', ')}` : null,
+    profile.target_regions?.length ? `Regions: ${profile.target_regions.join(', ')}` : null,
+    profile.seniority_target ? `Seniority target: ${profile.seniority_target}` : null,
+    profile.remote_preference ? `Work arrangement preference: ${profile.remote_preference}` : null,
+    profile.compensation_floor ? `Minimum annual compensation: ${profile.compensation_floor}` : null,
+  ].filter(Boolean).join('\n');
+
+  const response = await createMessage({
+    model: MODEL_STANDARD,
+    max_tokens: 4000,
+    tools: [{ type: 'web_search_20260209', name: 'web_search' }],
+    system: [
+      { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
+      {
+        type: 'text',
+        text: `Use the web_search tool to find CURRENT, REAL job listings that match this candidate's resume and preferences. Search job boards and company career pages. Run several searches covering the candidate's strongest role matches and preferred regions.
+
+STRICT HONESTY RULES:
+- Include ONLY listings you actually found through search, with their real URLs. Never invent a listing, company, salary, or URL.
+- Prefer direct links to the specific posting. A search-results URL is acceptable only if no direct link surfaced.
+- If salary was not stated, use an empty string. If you found fewer than 5 solid listings, return fewer; do not pad.
+
+For each listing, estimate a match score from 0-100 against the resume and preferences, the way a recruiter would judge fit. Be honest; not everything is an 80.
+
+After searching, return ONLY valid JSON — no markdown fences, no text outside the JSON:
+{
+  "listings": [
+    {
+      "title": "<job title>",
+      "company": "<company>",
+      "location": "<location or Remote>",
+      "salary": "<stated salary or empty string>",
+      "url": "<real URL from search>",
+      "summary": "<1-2 sentences: what the role is and what they want>",
+      "match_score": <integer 0-100>,
+      "match_reason": "<one sentence: why this score, tied to the resume>"
+    }
+  ],
+  "search_note": "<one sentence on coverage, e.g. which boards or regions were searched, or if results were thin>"
+}
+
+Return 5-10 listings ordered by match_score descending.`,
+      },
+    ],
+    messages: [
+      {
+        role: 'user',
+        content: `RESUME:\n${resumeText}\n\n---\n\nCANDIDATE PREFERENCES:\n${prefs || 'None set — infer sensible targets from the resume.'}`,
+      },
+    ],
+  });
+
+  return parseJSON(extractText(response));
 }
 
 async function suggestRoles(resumeText) {
@@ -423,6 +488,7 @@ module.exports = {
   interviewPrep,
   postInterviewDebrief,
   suggestRoles,
+  findListings,
   extractTextFromImage,
   rescoreWithAnswers,
   chat,

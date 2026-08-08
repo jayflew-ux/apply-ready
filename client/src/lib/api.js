@@ -93,6 +93,7 @@ export const api = {
     interviewPrep:   (id, body)   => api.post(`/ai/interview-prep/${id}`, body || {}),
     debrief:         (id, body)   => api.post(`/ai/debrief/${id}`, body),
     suggestRoles:    ()           => api.post('/ai/suggest-roles', {}),
+    findListings:    (force)      => api.post('/ai/find-listings', { force: Boolean(force) }),
     chat:            (body)       => api.post('/ai/chat', body),
   },
   documents: {

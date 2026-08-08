@@ -264,6 +264,40 @@ router.post('/debrief/:userJobId', async (req, res, next) => {
   }
 });
 
+// Live job listings via web search, scored against the resume.
+// Cached per user for 6 hours to keep search costs sane; force=true refreshes.
+const LISTINGS_CACHE_HOURS = 6;
+
+router.post('/find-listings', async (req, res, next) => {
+  try {
+    const [{ data: resumeData }, { data: profile }] = await Promise.all([
+      req.db.from('resumes').select('raw_text').eq('user_id', req.user.id).eq('is_active', true).limit(1).single(),
+      req.db.from('profiles').select('*').eq('id', req.user.id).single(),
+    ]);
+
+    if (!resumeData?.raw_text) return res.status(400).json({ error: 'No active resume found' });
+
+    const force = Boolean(req.body?.force);
+    const cachedAt = profile?.discover_listings_at ? new Date(profile.discover_listings_at) : null;
+    const fresh = cachedAt && (Date.now() - cachedAt.getTime()) < LISTINGS_CACHE_HOURS * 3600 * 1000;
+
+    if (!force && fresh && profile?.discover_listings) {
+      return res.json({ ...profile.discover_listings, cached: true, fetched_at: profile.discover_listings_at });
+    }
+
+    const result = await ai.findListings(resumeData.raw_text, profile || {});
+
+    await req.db
+      .from('profiles')
+      .update({ discover_listings: result, discover_listings_at: new Date().toISOString() })
+      .eq('id', req.user.id);
+
+    res.json({ ...result, cached: false, fetched_at: new Date().toISOString() });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Suggest roles from resume
 router.post('/suggest-roles', async (req, res, next) => {
   try {

@@ -223,6 +223,8 @@ router.post('/add', upload.single('file'), async (req, res, next) => {
       description = parsed.text;
       source_type = 'text';
       raw_input = req.body.text;
+      // A listing picked from Discover carries its posting URL alongside the text
+      if (req.body.url) source_url = req.body.url;
     } else if (req.body.url) {
       source_url = req.body.url;
       source_type = 'url';

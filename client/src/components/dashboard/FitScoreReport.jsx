@@ -96,6 +96,30 @@ export default function FitScoreReport({ report, jobTitle, company, updatedScore
         )}
       </div>
 
+      {/* ATS keyword coverage (present on newer reports) */}
+      {(report.keyword_coverage?.covered?.length > 0 || report.keyword_coverage?.missing?.length > 0) && (
+        <div className="border-t border-[#e5e5e0] pt-4">
+          <p className="font-montserrat text-xs uppercase tracking-widest text-ink/40 mb-2.5">ATS keyword coverage</p>
+          <div className="flex flex-wrap gap-1.5">
+            {(report.keyword_coverage.covered || []).map((k, i) => (
+              <span key={`c-${i}`} className="px-2.5 py-1 bg-teal/10 border border-teal/25 rounded-sm font-montserrat text-[11px] font-semibold text-teal">
+                ✓ {k}
+              </span>
+            ))}
+            {(report.keyword_coverage.missing || []).map((k, i) => (
+              <span key={`m-${i}`} className="px-2.5 py-1 bg-white border border-copper/40 border-dashed rounded-sm font-montserrat text-[11px] font-semibold text-copper">
+                {k}
+              </span>
+            ))}
+          </div>
+          {(report.keyword_coverage.missing || []).length > 0 && (
+            <p className="font-lora text-xs text-ink/45 mt-2 leading-relaxed">
+              Dashed terms are in the posting but not your resume. Your tailored resume weaves them in only where your real experience supports them.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Verdict reason */}
       {report.verdict_reason && (
         <div className="border-t border-[#e5e5e0] pt-4">

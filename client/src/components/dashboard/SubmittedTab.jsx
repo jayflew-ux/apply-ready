@@ -27,6 +27,14 @@ export default function SubmittedTab({ jobs, loading, onJourneyUpdate }) {
           ? new Date(item.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
           : null;
 
+        // Follow-up nudge: sitting at "Applied" with no movement for 5+ days
+        const daysSinceApplied = item.applied_at
+          ? Math.floor((Date.now() - new Date(item.applied_at).getTime()) / 86400000)
+          : null;
+        const needsFollowUp =
+          (item.journey_status || 'applied') === 'applied' &&
+          daysSinceApplied != null && daysSinceApplied >= 5 && daysSinceApplied <= 45;
+
         return (
           <div
             key={item.id}
@@ -55,6 +63,14 @@ export default function SubmittedTab({ jobs, loading, onJourneyUpdate }) {
                 <span className={`font-montserrat font-bold text-sm ${item.fit_score >= 70 ? 'text-teal' : item.fit_score >= 45 ? 'text-copper' : 'text-red-600'}`}>
                   {item.fit_score}/100
                 </span>
+              </div>
+            )}
+
+            {needsFollowUp && (
+              <div className="bg-copper/5 border border-copper/25 rounded-sm px-3 py-2">
+                <p className="font-lora text-xs text-copper leading-relaxed">
+                  Applied {daysSinceApplied} days ago with no movement. A short, warm follow-up note to the recruiter or hiring manager can revive an application — mention the role, restate your one strongest qualification, and ask if they need anything else from you.
+                </p>
               </div>
             )}
 
