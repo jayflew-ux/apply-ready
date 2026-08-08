@@ -142,7 +142,10 @@ router.post('/score-questions/:userJobId', async (req, res, next) => {
 
 // Tailor resume — free accounts get FREE_RESUME_BUILDS complete builds,
 // subscribers are unlimited. Regenerating for the same job never counts.
-const FREE_RESUME_BUILDS = 1;
+// Until Stripe is configured there is no way to pay, so the free allowance
+// stays at 5 rather than stranding users at a dead paywall.
+const BILLING_LIVE = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID);
+const FREE_RESUME_BUILDS = BILLING_LIVE ? 1 : 5;
 
 router.post('/tailor-resume/:userJobId', async (req, res, next) => {
   try {
@@ -202,7 +205,7 @@ router.post('/cover-letter/:userJobId', async (req, res, next) => {
     if (!resumeText) return res.status(400).json({ error: 'No active resume found' });
     if (!job) return res.status(404).json({ error: 'Job not found' });
 
-    if (!userJob?.tailored_resume_text) {
+    if (!userJob?.tailored_resume_text && BILLING_LIVE) {
       const { data: profile } = await req.db
         .from('profiles')
         .select('subscription_status')
