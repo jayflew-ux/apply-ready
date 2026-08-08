@@ -29,7 +29,7 @@ router.get('/users', async (req, res, next) => {
   try {
     const { data, error } = await serviceClient
       .from('profiles')
-      .select('id, email, full_name, resume_builds_used, input_tokens_used, output_tokens_used, ai_calls, created_at')
+      .select('id, email, full_name, subscription_status, resume_builds_used, input_tokens_used, output_tokens_used, ai_calls, created_at')
       .order('created_at', { ascending: false });
 
     if (error) throw error;

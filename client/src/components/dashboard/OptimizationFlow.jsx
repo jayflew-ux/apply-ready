@@ -6,6 +6,7 @@ import { estimateResumePages } from '../../utils/resumeText';
 import FitScoreReport from './FitScoreReport';
 import ResumePreview from './ResumePreview';
 import CoverLetterPreview from './CoverLetterPreview';
+import UpgradeModal from '../UpgradeModal';
 import Button from '../ui/Button';
 import Spinner from '../ui/Spinner';
 import { Textarea } from '../ui/Input';
@@ -27,6 +28,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
   const [resumeText, setResumeText] = useState('');
   const [letterText, setLetterText] = useState('');
   const [error, setError]          = useState('');
+  const [upgradeOpen, setUpgrade]  = useState(false);
 
   // Step 0: auto-fetch fit score if not already loaded
   useEffect(() => {
@@ -75,7 +77,12 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
       const data = await api.ai.tailorResume(userJobId, { answers: answersArr });
       setResumeText(data.tailored_resume_text);
     } catch (e) {
-      setError(e.message);
+      if (e.data?.upgrade_required) {
+        setUpgrade(true);
+        setStep(2); // back to the score step so the flow isn't stranded
+      } else {
+        setError(e.message);
+      }
     } finally {
       setLoadingR(false);
     }
@@ -89,7 +96,12 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
       const data = await api.ai.coverLetter(userJobId, { answers: answersArr });
       setLetterText(data.cover_letter_text);
     } catch (e) {
-      setError(e.message);
+      if (e.data?.upgrade_required) {
+        setUpgrade(true);
+        setStep(3);
+      } else {
+        setError(e.message);
+      }
     } finally {
       setLoadingL(false);
     }
@@ -102,6 +114,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
 
   return (
     <div className="flex flex-col gap-6">
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgrade(false)} />
       {/* Step indicator */}
       <div className="flex gap-0 overflow-x-auto pb-1">
         {STEPS.map((s, i) => (

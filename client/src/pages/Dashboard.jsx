@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [addOpen, setAddOpen]   = useState(false);
   const [hasResume, setHasResume] = useState(null); // null = still checking
   const [isAdmin, setIsAdmin]   = useState(false);
+  const [justUpgraded] = useState(() => new URLSearchParams(window.location.search).get('upgraded') === '1');
 
   // Keep chat context in sync with active tab
   useEffect(() => {
@@ -112,6 +113,14 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 pb-20">
+        {justUpgraded && (
+          <div className="mt-6 bg-teal/5 border border-teal/25 rounded-sm px-4 py-3">
+            <p className="font-lora text-sm text-teal">
+              Welcome to Dream Job Ready Pro. Your builds are now unlimited — go get that job.
+            </p>
+          </div>
+        )}
+
         {/* Getting started checklist — shows until all steps complete */}
         {hasResume !== null && (
           <GettingStarted

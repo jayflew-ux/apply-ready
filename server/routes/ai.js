@@ -140,8 +140,9 @@ router.post('/score-questions/:userJobId', async (req, res, next) => {
   }
 });
 
-// Tailor resume
-const RESUME_BUILD_LIMIT = 5;
+// Tailor resume — free accounts get FREE_RESUME_BUILDS complete builds,
+// subscribers are unlimited. Regenerating for the same job never counts.
+const FREE_RESUME_BUILDS = 1;
 
 router.post('/tailor-resume/:userJobId', async (req, res, next) => {
   try {
@@ -149,19 +150,20 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
     if (!resumeText) return res.status(400).json({ error: 'No active resume found' });
     if (!job) return res.status(404).json({ error: 'Job not found' });
 
-    // Enforce the resume build limit. Regenerating for the same job is free.
     const { data: profile } = await req.db
       .from('profiles')
-      .select('resume_builds_used')
+      .select('resume_builds_used, subscription_status')
       .eq('id', req.user.id)
       .single();
 
     const buildsUsed = profile?.resume_builds_used || 0;
+    const isSubscriber = profile?.subscription_status === 'active';
     const isRegeneration = Boolean(userJob?.tailored_resume_text);
 
-    if (!isRegeneration && buildsUsed >= RESUME_BUILD_LIMIT) {
+    if (!isSubscriber && !isRegeneration && buildsUsed >= FREE_RESUME_BUILDS) {
       return res.status(403).json({
-        error: `You've used all ${RESUME_BUILD_LIMIT} of your resume builds. More are coming soon.`,
+        error: 'You have used your free application build. Upgrade to keep building tailored resumes and cover letters for every role you pursue.',
+        upgrade_required: true,
       });
     }
 
@@ -186,18 +188,33 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
         .eq('id', req.user.id);
     }
 
-    res.json({ tailored_resume_text: tailored, builds_used: isRegeneration ? buildsUsed : buildsUsed + 1, builds_limit: RESUME_BUILD_LIMIT });
+    res.json({ tailored_resume_text: tailored, builds_used: isRegeneration ? buildsUsed : buildsUsed + 1, builds_limit: isSubscriber ? null : FREE_RESUME_BUILDS });
   } catch (err) {
     next(err);
   }
 });
 
-// Write cover letter
+// Write cover letter — allowed whenever this job already has a tailored
+// resume (the build was paid for or free-included); otherwise subscribers only.
 router.post('/cover-letter/:userJobId', async (req, res, next) => {
   try {
     const { resumeText, userJob, job } = await getContext(req);
     if (!resumeText) return res.status(400).json({ error: 'No active resume found' });
     if (!job) return res.status(404).json({ error: 'Job not found' });
+
+    if (!userJob?.tailored_resume_text) {
+      const { data: profile } = await req.db
+        .from('profiles')
+        .select('subscription_status')
+        .eq('id', req.user.id)
+        .single();
+      if (profile?.subscription_status !== 'active') {
+        return res.status(403).json({
+          error: 'Cover letters are part of the application build. Upgrade to keep building.',
+          upgrade_required: true,
+        });
+      }
+    }
 
     const { answers = [] } = req.body;
     const tailored = userJob?.tailored_resume_text || resumeText;

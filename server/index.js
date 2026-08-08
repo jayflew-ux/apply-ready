@@ -30,6 +30,11 @@ app.use(cors({
   },
   credentials: true,
 }));
+// Stripe webhook needs the raw body for signature verification, so it mounts
+// before the JSON parser.
+const billing = require('./routes/billing');
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billing.webhook);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -42,6 +47,7 @@ app.use('/api/jobs',      require('./routes/jobs'));
 app.use('/api/ai',        require('./routes/ai'));
 app.use('/api/documents', require('./routes/documents'));
 app.use('/api/admin',     require('./routes/admin'));
+app.use('/api/billing',   billing.router);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 

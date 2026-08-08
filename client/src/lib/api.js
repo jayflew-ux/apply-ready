@@ -23,11 +23,15 @@ async function request(method, path, body) {
   const contentType = res.headers.get('content-type') || '';
   if (!res.ok) {
     let message = `Request failed: ${res.status}`;
+    let data = {};
     if (contentType.includes('application/json')) {
-      const json = await res.json().catch(() => ({}));
-      message = json.error || message;
+      data = await res.json().catch(() => ({}));
+      message = data.error || message;
     }
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = res.status;
+    error.data = data; // carries flags like upgrade_required
+    throw error;
   }
 
   // Binary responses (document downloads)
@@ -102,6 +106,10 @@ export const api = {
   },
   admin: {
     users: () => api.get('/admin/users'),
+  },
+  billing: {
+    checkout: () => api.post('/billing/checkout', {}),
+    portal:   () => api.get('/billing/portal'),
   },
 };
 

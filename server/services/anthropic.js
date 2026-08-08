@@ -381,6 +381,7 @@ HOW THE APP WORKS:
 - Add a Job: Paste job text or upload a screenshot of any posting found anywhere.
 - Resume: Upload a PDF or Word doc, or paste text. The AI tailors it per job without modifying the original. Tailored resumes and cover letters print as polished, ready-to-send documents, not plain text.
 - Fit Score: 0-100 score across Skills Match, Experience, Culture/Values, and Trajectory Fit.
+- Plans: the free plan includes role discovery, scored live listings, fit scores, and one complete application build (tailored resume + cover letter). Dream Job Ready Pro is $19.99/month for unlimited builds, cancel anytime, managed from the Profile page.
 - Clarifying Questions: 3-5 targeted questions after the fit score to surface context the resume may not capture. Answers improve the score and feed into the tailored resume and cover letter.
 
 TONE: Warm, direct, specific. Short answers unless depth is needed. No jargon.${contextLines ? `\n\nUSER CONTEXT:\n${contextLines}` : ''}`,

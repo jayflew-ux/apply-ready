@@ -6,6 +6,7 @@ import { api } from '../lib/api';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Spinner from '../components/ui/Spinner';
+import UpgradeModal from '../components/UpgradeModal';
 
 const SITUATIONS = [
   { value: 'entry-level',         label: 'Entry-level / first job' },
@@ -51,7 +52,19 @@ export default function Profile() {
   const [uploading, setUploading]     = useState(false);
   const [uploadDone, setUploadDone]   = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const fileRef = useRef(null);
+
+  async function openPortal() {
+    setPortalLoading(true);
+    try {
+      const { url } = await api.billing.portal();
+      window.location.href = url;
+    } catch {
+      setPortalLoading(false);
+    }
+  }
 
   useEffect(() => {
     api.resume.get().then(r => setResume(r)).catch(() => {});
@@ -234,6 +247,30 @@ export default function Profile() {
             />
           </div>
 
+          {/* Plan section */}
+          <div className="border-t border-[#e5e5e0] pt-8">
+            <p className="font-montserrat font-semibold text-sm text-ink/80 tracking-wide mb-2">Your plan</p>
+            {profile?.subscription_status === 'active' ? (
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <p className="font-lora text-sm text-ink/70">
+                  <span className="font-montserrat font-bold text-teal">Dream Job Ready Pro</span> — unlimited application builds.
+                </p>
+                <Button size="sm" variant="outline" onClick={openPortal} loading={portalLoading}>
+                  Manage subscription
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <p className="font-lora text-sm text-ink/70">
+                  Free plan — includes role discovery, scored listings, fit scores, and one complete application build.
+                </p>
+                <Button size="sm" onClick={() => setUpgradeOpen(true)}>
+                  Upgrade
+                </Button>
+              </div>
+            )}
+          </div>
+
           {/* Resume section */}
           <div className="border-t border-[#e5e5e0] pt-8">
             <div className="flex items-start justify-between gap-4 mb-4">
@@ -322,6 +359,8 @@ export default function Profile() {
             <Button onClick={save} loading={saving}>Save changes</Button>
             {saved && <span className="font-lora text-sm text-teal">Saved.</span>}
           </div>
+
+          <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
         </div>
       </main>
     </div>

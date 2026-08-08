@@ -86,7 +86,7 @@ export default function Admin() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-[#e5e5e0] bg-[#faf8f0]">
-                  {['Name', 'Email', 'Resumes', 'Tokens (in/out)', 'AI calls', 'Est. cost', 'Joined'].map(h => (
+                  {['Name', 'Email', 'Plan', 'Resumes', 'Tokens (in/out)', 'AI calls', 'Est. cost', 'Joined'].map(h => (
                     <th key={h} className="px-4 py-3 font-montserrat text-[10px] uppercase tracking-widest text-ink/50 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -96,6 +96,11 @@ export default function Admin() {
                   <tr key={u.id} className="border-b border-[#f0efe8] hover:bg-[#faf8f0]/50">
                     <td className="px-4 py-3 font-montserrat text-sm text-ink whitespace-nowrap">{u.full_name || '—'}</td>
                     <td className="px-4 py-3 font-lora text-sm text-ink/70 whitespace-nowrap">{u.email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`font-montserrat text-xs font-bold ${u.subscription_status === 'active' ? 'text-teal' : 'text-ink/40'}`}>
+                        {u.subscription_status === 'active' ? 'PRO' : u.subscription_status === 'past_due' ? 'PAST DUE' : 'Free'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 font-montserrat text-sm text-teal font-semibold">{u.resume_builds_used || 0}</td>
                     <td className="px-4 py-3 font-lora text-xs text-ink/60 whitespace-nowrap">{fmt(u.input_tokens_used)} / {fmt(u.output_tokens_used)}</td>
                     <td className="px-4 py-3 font-lora text-sm text-ink/60">{u.ai_calls || 0}</td>
@@ -104,7 +109,7 @@ export default function Admin() {
                   </tr>
                 ))}
                 {users.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center font-lora text-sm text-ink/40">No users yet.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-8 text-center font-lora text-sm text-ink/40">No users yet.</td></tr>
                 )}
               </tbody>
             </table>
