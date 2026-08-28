@@ -177,16 +177,32 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
 
     const tailored = await ai.tailorResume(resumeText, job.description, answers, style);
 
-    await req.db
+    const savePayload = {
+      tailored_resume_text: tailored,
+      tailored_resume_style: style || 'classic',
+      score_improvement_answers: answers,
+    };
+
+    // resume_revisions_used arrives in a later migration. Try to reset it, but
+    // never let its absence stop the resume itself from being saved.
+    let { error: saveErr } = await req.db
       .from('user_jobs')
-      .update({
-        tailored_resume_text: tailored,
-        tailored_resume_style: style || 'classic',
-        score_improvement_answers: answers,
-        resume_revisions_used: 0, // a fresh build restores both revisions
-      })
+      .update({ ...savePayload, resume_revisions_used: 0 })
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id);
+
+    if (saveErr) {
+      ({ error: saveErr } = await req.db
+        .from('user_jobs')
+        .update(savePayload)
+        .eq('id', req.params.userJobId)
+        .eq('user_id', req.user.id));
+    }
+
+    if (saveErr) {
+      console.error('failed to save tailored resume', saveErr.message);
+      throw new Error('Your resume was generated but could not be saved. Please try again.');
+    }
 
     if (!isRegeneration) {
       await req.db
@@ -224,7 +240,7 @@ router.post('/revise-resume/:userJobId', async (req, res, next) => {
       return res.status(400).json({ error: 'Generate a tailored resume first, then you can request changes.' });
     }
 
-    const used = userJob.resume_revisions_used || 0;
+    const used = userJob.resume_revisions_used || 0; // 0 when the column is not migrated yet
     if (used >= MAX_RESUME_REVISIONS) {
       return res.status(403).json({
         error: `You have used both revisions for this job. You can still edit the text yourself after downloading, or start this job fresh to reset.`,
@@ -240,11 +256,26 @@ router.post('/revise-resume/:userJobId', async (req, res, next) => {
       feedback,
     );
 
-    await req.db
+    let { error: revErr } = await req.db
       .from('user_jobs')
       .update({ tailored_resume_text: revised, resume_revisions_used: used + 1 })
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id);
+
+    if (revErr) {
+      // Without the revisions column we cannot count revisions, but the
+      // revised resume must still be saved.
+      ({ error: revErr } = await req.db
+        .from('user_jobs')
+        .update({ tailored_resume_text: revised })
+        .eq('id', req.params.userJobId)
+        .eq('user_id', req.user.id));
+    }
+
+    if (revErr) {
+      console.error('failed to save revised resume', revErr.message);
+      throw new Error('Your revision was generated but could not be saved. Please try again.');
+    }
 
     res.json({
       tailored_resume_text: revised,
