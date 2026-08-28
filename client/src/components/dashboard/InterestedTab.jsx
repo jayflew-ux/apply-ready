@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import JobCard from './JobCard';
+import SavedDocuments from './SavedDocuments';
 import OptimizationFlow from './OptimizationFlow';
 import Modal from '../ui/Modal';
 import Spinner from '../ui/Spinner';
@@ -55,6 +56,16 @@ export default function InterestedTab({ jobs, loading, onStatusChange }) {
             >
               {removing === item.userJobId ? '...' : '✕'}
             </button>
+            {(item.hasResume || item.hasCoverLetter) && (
+              <div className="px-4 pb-3 -mt-2">
+                <SavedDocuments
+                  userJobId={item.userJobId}
+                  job={item}
+                  hasResume={item.hasResume}
+                  hasCoverLetter={item.hasCoverLetter}
+                />
+              </div>
+            )}
           </div>
         ))}
       </div>

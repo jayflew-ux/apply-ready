@@ -1,7 +1,7 @@
 /**
  * Renders a plain-text Claude resume as a polished, on-screen preview that
- * matches the printed output — one premium visual template regardless of
- * the style selected in Profile (style shapes wording/emphasis, not looks).
+ * matches the printed output. Uses classic professional black-and-grey —
+ * these are the candidate's documents, not a place for app branding.
  */
 import { classifyLine } from '../../utils/resumeText';
 
@@ -27,12 +27,12 @@ export default function ResumePreview({ text }) {
   if (nameIdx >= 0) {
     elements.push(
       <div key="header" className="pb-3 mb-4">
-        <p className="font-montserrat font-extrabold text-3xl text-teal-deeper leading-tight tracking-tight">
+        <p className="font-montserrat font-extrabold text-3xl text-ink leading-tight tracking-tight">
           {parsed[nameIdx].text}
         </p>
-        <div className="h-[2.5px] mt-2 mb-2 rounded-full" style={{ background: 'linear-gradient(to right, #c87b33, #edcf30, transparent 85%)' }} />
+        <div className="h-[2.5px] mt-2 mb-2 rounded-full" style={{ background: '#333333' }} />
         {contactIdx >= 0 && (
-          <p className="font-montserrat text-[10px] font-medium text-ink/50 tracking-wide">{parsed[contactIdx].text}</p>
+          <p className="font-montserrat text-[10px] font-medium text-ink/60 tracking-wide">{parsed[contactIdx].text}</p>
         )}
       </div>
     );
@@ -46,7 +46,7 @@ export default function ResumePreview({ text }) {
     elements.push(
       <ul key={`ul-${key++}`} className="ml-4 mb-2 flex flex-col gap-1">
         {bullets.map((b, i) => (
-          <li key={i} className="font-lora text-xs text-ink/80 leading-relaxed marker:text-copper" style={{ listStyleType: 'disc' }}>{b}</li>
+          <li key={i} className="font-lora text-xs text-ink/80 leading-relaxed marker:text-ink/50" style={{ listStyleType: 'disc' }}>{b}</li>
         ))}
       </ul>
     );
@@ -66,7 +66,7 @@ export default function ResumePreview({ text }) {
       case 'heading':
         elements.push(
           <div key={`h-${key++}`} className="mt-4 mb-2">
-            <span className="font-montserrat font-bold text-[9px] uppercase tracking-[2.5px] text-teal pb-1 border-b-[1.5px] border-teal inline-block">
+            <span className="font-montserrat font-bold text-[9px] uppercase tracking-[2.5px] text-ink pb-1 border-b-[1.5px] border-ink/70 inline-block">
               {p.text}
             </span>
           </div>
@@ -80,7 +80,7 @@ export default function ResumePreview({ text }) {
         elements.push(
           <div key={`jr-${key++}`} className="flex items-baseline justify-between flex-wrap gap-x-3 mt-2.5 mb-1">
             <span className="font-montserrat font-bold text-xs text-ink">{title}</span>
-            <span className="font-montserrat text-[9px] font-medium text-copper">{meta}</span>
+            <span className="font-montserrat text-[9px] font-medium text-ink/55">{meta}</span>
           </div>
         );
         break;

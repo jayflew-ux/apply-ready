@@ -1,20 +1,38 @@
 /**
  * Renders Claude's plain-text resume and cover letter output as a styled,
- * print-ready document — matching the app's Montserrat/Lora, teal/copper/gold
- * brand system. One consistent premium template regardless of the style the
- * user picked in Profile (that setting shapes the AI's word choice and
- * section emphasis, not the visual template).
+ * print-ready document.
+ *
+ * These are the candidate's documents, so they default to classic
+ * professional black-and-grey rather than any app branding. The resume style
+ * chosen in Profile selects the palette; classic is the default and the
+ * safest choice for applicant tracking systems.
  */
 
 import { classifyLine, parseResumeHeader } from './resumeText';
 
 const FONT_LINK = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap';
 
-const TEAL = '#1e8b8b';
-const TEAL_DEEPER = '#0d3535';
-const COPPER = '#c87b33';
-const GOLD = '#edcf30';
-const INK = '#2c2c2c';
+/**
+ * Document palettes.
+ *
+ * These are the CANDIDATE's documents, not ours, so the default is classic
+ * professional black and grey — the safest, most widely accepted look for a
+ * resume and the friendliest to applicant tracking systems. App branding
+ * belongs in the app, never on someone's job application.
+ *
+ * A user can opt into an accent via the resume style setting in Profile.
+ */
+const PALETTES = {
+  classic:   { name: '#111111', heading: '#111111', rule: '#333333', meta: '#555555', body: '#1a1a1a', accentRule: false },
+  'ats-safe':{ name: '#000000', heading: '#000000', rule: '#000000', meta: '#444444', body: '#000000', accentRule: false },
+  executive: { name: '#111111', heading: '#1f2d3d', rule: '#1f2d3d', meta: '#4a5568', body: '#1a1a1a', accentRule: false },
+  modern:    { name: '#0f2942', heading: '#1a4971', rule: '#1a4971', meta: '#4a5568', body: '#1a1a1a', accentRule: true },
+  editorial: { name: '#1a1a1a', heading: '#6b4423', rule: '#6b4423', meta: '#5a5a55', body: '#1a1a1a', accentRule: true },
+};
+
+function paletteFor(style) {
+  return PALETTES[style] || PALETTES.classic;
+}
 
 function buildResumeHTML(text) {
   const rawLines = text.split('\n');
@@ -82,11 +100,11 @@ function buildResumeHTML(text) {
   return html;
 }
 
-const RESUME_CSS = `
+const RESUME_CSS = (P) => `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
     font-family: 'Lora', Georgia, serif;
-    color: ${INK};
+    color: ${P.body};
     font-size: 10.25pt;
     line-height: 1.42;
     background: #fff;
@@ -98,20 +116,20 @@ const RESUME_CSS = `
     font-family: 'Montserrat', sans-serif;
     font-size: 25pt;
     font-weight: 800;
-    color: ${TEAL_DEEPER};
+    color: ${P.name};
     letter-spacing: -0.4px;
     line-height: 1.1;
   }
   .header-rule {
     height: 2px;
     margin: 9px 0 8px;
-    background: linear-gradient(to right, ${COPPER}, ${GOLD}, transparent 85%);
+    background: ${P.accentRule ? `linear-gradient(to right, ${P.rule}, ${P.rule} 55%, transparent 95%)` : P.rule};
   }
   .resume-contact {
     font-family: 'Montserrat', sans-serif;
     font-size: 8.5pt;
     font-weight: 500;
-    color: #5a5a55;
+    color: ${P.meta};
     letter-spacing: 0.3px;
   }
   .section { break-inside: avoid-page; margin-bottom: 2px; }
@@ -123,11 +141,11 @@ const RESUME_CSS = `
     font-family: 'Montserrat', sans-serif;
     font-size: 8pt;
     font-weight: 700;
-    color: ${TEAL};
+    color: ${P.heading};
     text-transform: uppercase;
     letter-spacing: 2.2px;
     padding-bottom: 4px;
-    border-bottom: 1.5px solid ${TEAL};
+    border-bottom: 1.5px solid ${P.rule};
     display: inline-block;
   }
   .job-row {
@@ -145,13 +163,13 @@ const RESUME_CSS = `
     font-family: 'Montserrat', sans-serif;
     font-size: 10pt;
     font-weight: 700;
-    color: ${INK};
+    color: ${P.body};
   }
   .job-meta {
     font-family: 'Montserrat', sans-serif;
     font-size: 8.25pt;
     font-weight: 500;
-    color: ${COPPER};
+    color: ${P.meta};
     text-align: right;
   }
   .bullet-list { margin-left: 16px; margin-top: 2px; margin-bottom: 5px; }
@@ -160,7 +178,7 @@ const RESUME_CSS = `
     padding-left: 3px;
     break-inside: avoid;
   }
-  .bullet-list li::marker { color: ${COPPER}; }
+  .bullet-list li::marker { color: ${P.rule}; }
   p { margin-bottom: 4px; }
   @media print {
     html, body { background: white; }
@@ -199,10 +217,10 @@ function openPrintWindow(title, bodyHTML, css) {
   win.document.close();
 }
 
-export function printResume(text, jobTitle = '', company = '') {
+export function printResume(text, jobTitle = '', company = '', style = 'classic') {
   const body = buildResumeHTML(text);
   const docTitle = [jobTitle, company].filter(Boolean).join(' — ') || 'Resume';
-  openPrintWindow(docTitle, body, RESUME_CSS);
+  openPrintWindow(docTitle, body, RESUME_CSS(paletteFor(style)));
 }
 
 /**
@@ -211,7 +229,8 @@ export function printResume(text, jobTitle = '', company = '') {
  * signoff — so what prints is a complete, ready-to-send letter rather
  * than a bare paragraph of text.
  */
-export function printCoverLetter(text, jobTitle = '', company = '', resumeText = '') {
+export function printCoverLetter(text, jobTitle = '', company = '', resumeText = '', style = 'classic') {
+  const P = paletteFor(style);
   const { name, contact } = parseResumeHeader(resumeText);
   const docTitle = [jobTitle, company].filter(Boolean).join(' — ') || 'Cover Letter';
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -224,7 +243,7 @@ export function printCoverLetter(text, jobTitle = '', company = '', resumeText =
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       font-family: 'Lora', Georgia, serif;
-      color: ${INK};
+      color: ${P.body};
       font-size: 11pt;
       line-height: 1.65;
       background: #fff;
@@ -236,21 +255,21 @@ export function printCoverLetter(text, jobTitle = '', company = '', resumeText =
       font-family: 'Montserrat', sans-serif;
       font-size: 16pt;
       font-weight: 800;
-      color: ${TEAL_DEEPER};
+      color: ${P.name};
       letter-spacing: -0.2px;
     }
     .letter-contact {
       font-family: 'Montserrat', sans-serif;
       font-size: 8.5pt;
       font-weight: 500;
-      color: #5a5a55;
+      color: ${P.meta};
       letter-spacing: 0.3px;
       margin-top: 3px;
     }
     .header-rule {
       height: 2px;
       margin: 12px 0 0;
-      background: linear-gradient(to right, ${COPPER}, ${GOLD}, transparent 85%);
+      background: ${P.accentRule ? `linear-gradient(to right, ${P.rule}, ${P.rule} 55%, transparent 95%)` : P.rule};
     }
     .letter-date { font-size: 10pt; color: #6a6a65; margin-bottom: 22px; }
     .salutation { margin-bottom: 16px; font-weight: 500; }
@@ -259,7 +278,7 @@ export function printCoverLetter(text, jobTitle = '', company = '', resumeText =
     .signoff .name {
       font-family: 'Montserrat', sans-serif;
       font-weight: 700;
-      color: ${TEAL_DEEPER};
+      color: ${P.name};
       margin-top: 26px;
     }
     @media print {

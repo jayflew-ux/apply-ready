@@ -82,6 +82,7 @@ router.get('/feed', async (req, res, next) => {
       .from('user_jobs')
       .select(`
         id, status, fit_score, fit_score_report, first_seen_at, last_updated_at,
+        tailored_resume_text, cover_letter_text,
         jobs (
           id, external_id, source, title, company, location, region,
           remote_type, compensation_min, compensation_max, compensation_currency,
@@ -102,12 +103,53 @@ router.get('/feed', async (req, res, next) => {
       status: uj.status,
       fitScore: uj.fit_score,
       fitScoreReport: uj.fit_score_report,
+      // Flags only — the documents themselves load on demand via /progress.
+      hasResume: Boolean(uj.tailored_resume_text),
+      hasCoverLetter: Boolean(uj.cover_letter_text),
       isNew: lastSeen ? new Date(uj.jobs?.cached_at) > lastSeen : true,
       firstSeenAt: uj.first_seen_at,
       ...uj.jobs,
     }));
 
     res.json({ jobs: feed });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Everything already generated for one job, so the optimization flow can
+// resume where the user left off instead of restarting, and so saved
+// documents can be downloaded from anywhere in the app.
+router.get('/:userJobId/progress', async (req, res, next) => {
+  try {
+    const { data, error } = await req.db
+      .from('user_jobs')
+      .select(`
+        id, status, fit_score, fit_score_report, score_improvement_answers,
+        tailored_resume_text, tailored_resume_style, resume_revisions_used,
+        cover_letter_text, interview_prep, post_interview_debrief,
+        jobs ( id, title, company, location, url, description )
+      `)
+      .eq('id', req.params.userJobId)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: 'Job not found' });
+
+    res.json({
+      userJobId: data.id,
+      status: data.status,
+      fitScore: data.fit_score,
+      fitScoreReport: data.fit_score_report,
+      answers: data.score_improvement_answers || [],
+      tailoredResumeText: data.tailored_resume_text || '',
+      tailoredResumeStyle: data.tailored_resume_style || 'classic',
+      resumeRevisionsUsed: data.resume_revisions_used || 0,
+      coverLetterText: data.cover_letter_text || '',
+      interviewPrep: data.interview_prep || null,
+      postInterviewDebrief: data.post_interview_debrief || null,
+      job: data.jobs || null,
+    });
   } catch (err) {
     next(err);
   }
@@ -120,6 +162,8 @@ router.get('/submitted', async (req, res, next) => {
       .from('user_jobs')
       .select(`
         id, status, fit_score, journey_status, journey_notes, applied_at, last_updated_at,
+        interview_prep, post_interview_debrief,
+        tailored_resume_text, cover_letter_text,
         jobs (
           id, title, company, location, remote_type, url, posted_at
         )
@@ -129,7 +173,16 @@ router.get('/submitted', async (req, res, next) => {
       .order('applied_at', { ascending: false });
 
     if (error) throw error;
-    res.json({ jobs: data || [] });
+
+    // Send flags rather than the full documents; the text loads on demand
+    // through /progress when the user actually opens one.
+    const jobs = (data || []).map(({ tailored_resume_text, cover_letter_text, ...rest }) => ({
+      ...rest,
+      hasResume: Boolean(tailored_resume_text),
+      hasCoverLetter: Boolean(cover_letter_text),
+    }));
+
+    res.json({ jobs });
   } catch (err) {
     next(err);
   }

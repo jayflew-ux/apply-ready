@@ -35,15 +35,57 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
   const [revisionsLimit, setRevLimit] = useState(2);
   const [feedbackOpen, setFbOpen]  = useState(false);
   const [reviseNote, setReviseNote] = useState('');
+  const [docStyle, setDocStyle]    = useState('classic');
 
-  // Step 0: auto-fetch fit score if not already loaded
+  // Restore any work already done on this job, then land the user on the
+  // furthest step they reached. Without this, leaving and coming back
+  // silently discarded a finished resume and cover letter.
+  const [restoring, setRestoring] = useState(true);
+
   useEffect(() => {
-    if (!fitScoreReport && userJobId) {
+    if (!userJobId) return;
+    let cancelled = false;
+
+    api.jobs.progress(userJobId)
+      .then(p => {
+        if (cancelled) return;
+
+        if (p.fitScoreReport) { setReport(p.fitScoreReport); setScoring(false); }
+        if (p.tailoredResumeText) setResumeText(p.tailoredResumeText);
+        if (p.coverLetterText) setLetterText(p.coverLetterText);
+        if (p.resumeRevisionsUsed != null) setRevUsed(p.resumeRevisionsUsed);
+        if (p.tailoredResumeStyle) setDocStyle(p.tailoredResumeStyle);
+
+        if (Array.isArray(p.answers) && p.answers.length) {
+          // Saved answers are {question, answer}; rebuild the keyed form state
+          // so the questions step shows what was already written.
+          setQuestions(p.answers.map((a, i) => ({ id: `saved_${i}`, question: a.question, why: '' })));
+          setAnswers(Object.fromEntries(p.answers.map((a, i) => [`saved_${i}`, a.answer || ''])));
+        }
+
+        // Resume at the furthest completed point.
+        if (p.status === 'applied')          setStep(5);
+        else if (p.coverLetterText)          setStep(4);
+        else if (p.tailoredResumeText)       setStep(3);
+        else if (p.answers?.length)          setStep(2);
+        else                                 setStep(0);
+      })
+      .catch(() => { /* fall through to a fresh run */ })
+      .finally(() => { if (!cancelled) setRestoring(false); });
+
+    return () => { cancelled = true; };
+  }, [userJobId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Only score from scratch when there was nothing saved to restore.
+  useEffect(() => {
+    if (restoring) return;
+    if (!report && userJobId) {
+      setScoring(true);
       api.ai.fitScore(userJobId)
         .then(r => { setReport(r); setScoring(false); })
         .catch(e => { setError(e.message); setScoring(false); });
     }
-  }, [userJobId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [restoring]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Step 1: auto-load questions
   useEffect(() => {
@@ -142,27 +184,57 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
     onApplied?.();
   }
 
+  if (restoring) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-16">
+        <Spinner size="lg" />
+        <p className="font-lora text-sm text-ink/60">Loading your progress...</p>
+      </div>
+    );
+  }
+
+  // Steps the user can jump back to: anything already completed.
+  const furthestStep = letterText ? 5 : resumeText ? 4 : report ? 2 : 0;
+  const canVisit = i => i <= Math.max(step, furthestStep);
+
   return (
     <div className="flex flex-col gap-6">
       <UpgradeModal open={upgradeOpen} onClose={() => setUpgrade(false)} />
-      {/* Step indicator */}
+      {/* Step indicator — completed steps are clickable so nothing is stranded */}
       <div className="flex gap-0 overflow-x-auto pb-1">
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center flex-shrink-0">
-            <div className="flex flex-col items-center gap-1">
-              <div className={`w-6 h-6 rounded-full text-xs font-montserrat font-bold flex items-center justify-center border ${
+            <button
+              type="button"
+              onClick={() => canVisit(i) && setStep(i)}
+              disabled={!canVisit(i)}
+              title={canVisit(i) ? `Go to ${s}` : 'Not yet available'}
+              className={`flex flex-col items-center gap-1 ${canVisit(i) ? 'cursor-pointer' : 'cursor-default'}`}
+            >
+              <div className={`w-6 h-6 rounded-full text-xs font-montserrat font-bold flex items-center justify-center border transition-colors ${
                 step === i     ? 'border-teal bg-teal text-white' :
-                step > i       ? 'border-teal/40 bg-teal/10 text-teal' :
+                canVisit(i)    ? 'border-teal/40 bg-teal/10 text-teal hover:bg-teal/20' :
                 'border-[#e5e5e0] text-ink/30'
               }`}>
                 {step > i ? '✓' : i + 1}
               </div>
-              <span className={`text-xs font-montserrat hidden sm:block whitespace-nowrap ${step === i ? 'text-teal font-semibold' : 'text-ink/30'}`}>{s}</span>
-            </div>
+              <span className={`text-xs font-montserrat hidden sm:block whitespace-nowrap ${step === i ? 'text-teal font-semibold' : canVisit(i) ? 'text-ink/50' : 'text-ink/30'}`}>{s}</span>
+            </button>
             {i < STEPS.length - 1 && <div className={`h-px w-3 mx-1 mt-[-12px] flex-shrink-0 ${step > i ? 'bg-teal/40' : 'bg-[#e5e5e0]'}`} />}
           </div>
         ))}
       </div>
+
+      {(resumeText || letterText) && step < 3 && (
+        <div className="bg-teal/5 border border-teal/20 rounded-sm px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+          <p className="font-lora text-sm text-ink/70">
+            You already have {[resumeText && 'a tailored resume', letterText && 'a cover letter'].filter(Boolean).join(' and ')} saved for this job.
+          </p>
+          <Button size="sm" variant="outline" onClick={() => setStep(letterText ? 4 : 3)}>
+            Go to my documents
+          </Button>
+        </div>
+      )}
 
       {error && <p className="font-lora text-sm text-red-600 bg-red-50 px-4 py-3 rounded-sm">{error}</p>}
 
@@ -283,6 +355,13 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
             </div>
           )}
 
+          {!loadingResume && !resumeText && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <p className="font-lora text-sm text-ink/60">No tailored resume for this job yet.</p>
+              <Button size="sm" onClick={generateResume}>Build my tailored resume</Button>
+            </div>
+          )}
+
           {resumeText && (
             <>
               <div className="max-h-[480px] overflow-y-auto rounded-sm">
@@ -354,7 +433,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => printResume(resumeText, job?.title, job?.company)}
+                  onClick={() => printResume(resumeText, job?.title, job?.company, docStyle)}
                 >
                   <PrinterIcon className="w-4 h-4" /> Print / Save as PDF
                 </Button>
@@ -379,6 +458,13 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
             </div>
           )}
 
+          {!loadingLetter && !letterText && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <p className="font-lora text-sm text-ink/60">No cover letter for this job yet.</p>
+              <Button size="sm" onClick={generateLetter}>Write my cover letter</Button>
+            </div>
+          )}
+
           {letterText && (
             <>
               <div className="max-h-[480px] overflow-y-auto rounded-sm">
@@ -391,7 +477,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => printCoverLetter(letterText, job?.title, job?.company, resumeText)}
+                  onClick={() => printCoverLetter(letterText, job?.title, job?.company, resumeText, docStyle)}
                 >
                   <PrinterIcon className="w-4 h-4" /> Print / Save as PDF
                 </Button>
@@ -413,12 +499,12 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
           </div>
           <div className="flex flex-col gap-2">
             {resumeText && (
-              <Button variant="outline" onClick={() => printResume(resumeText, job?.title, job?.company)}>
+              <Button variant="outline" onClick={() => printResume(resumeText, job?.title, job?.company, docStyle)}>
                 <PrinterIcon className="w-4 h-4" /> Print resume as PDF
               </Button>
             )}
             {letterText && (
-              <Button variant="outline" onClick={() => printCoverLetter(letterText, job?.title, job?.company, resumeText)}>
+              <Button variant="outline" onClick={() => printCoverLetter(letterText, job?.title, job?.company, resumeText, docStyle)}>
                 <PrinterIcon className="w-4 h-4" /> Print cover letter as PDF
               </Button>
             )}

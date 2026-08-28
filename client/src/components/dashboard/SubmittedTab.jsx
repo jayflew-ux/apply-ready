@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MapPinIcon } from '@heroicons/react/24/outline';
 import JourneyTracker from './JourneyTracker';
+import SavedDocuments from './SavedDocuments';
 import Badge from '../ui/Badge';
 import Spinner from '../ui/Spinner';
 
@@ -71,6 +72,17 @@ export default function SubmittedTab({ jobs, loading, onJourneyUpdate }) {
                 <p className="font-lora text-xs text-copper leading-relaxed">
                   Applied {daysSinceApplied} days ago with no movement. A short, warm follow-up note to the recruiter or hiring manager can revive an application — mention the role, restate your one strongest qualification, and ask if they need anything else from you.
                 </p>
+              </div>
+            )}
+
+            {(item.hasResume || item.hasCoverLetter) && (
+              <div className="border-t border-[#e5e5e0] pt-3">
+                <SavedDocuments
+                  userJobId={item.id}
+                  job={j}
+                  hasResume={item.hasResume}
+                  hasCoverLetter={item.hasCoverLetter}
+                />
               </div>
             )}
 

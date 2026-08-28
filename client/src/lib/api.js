@@ -84,6 +84,7 @@ export const api = {
     setStatus:   (id, status)     => api.put(`/jobs/${id}/status`, { status }),
     setJourney:  (id, body)       => api.put(`/jobs/${id}/journey`, body),
     remove:      (id)             => api.delete(`/jobs/${id}`),
+    progress:    (id)             => api.get(`/jobs/${id}/progress`),
     add:         (fd)             => api.upload('/jobs/add', fd),
     addText:     (body)           => api.post('/jobs/add', body),
   },

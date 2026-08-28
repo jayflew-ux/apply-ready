@@ -16,9 +16,9 @@ export default function CoverLetterPreview({ text, company = '', resumeText = ''
     <div className="bg-white rounded-sm border border-[#e5e5e0] shadow-sm p-8 text-left">
       {(name || contact) && (
         <div className="pb-3 mb-5">
-          {name && <p className="font-montserrat font-extrabold text-lg text-teal-deeper">{name}</p>}
+          {name && <p className="font-montserrat font-extrabold text-lg text-ink">{name}</p>}
           {contact && <p className="font-montserrat text-[10px] font-medium text-ink/50 tracking-wide mt-0.5">{contact}</p>}
-          <div className="h-[2.5px] mt-2.5 rounded-full" style={{ background: 'linear-gradient(to right, #c87b33, #edcf30, transparent 85%)' }} />
+          <div className="h-[2.5px] mt-2.5 rounded-full" style={{ background: '#333333' }} />
         </div>
       )}
 
@@ -32,7 +32,7 @@ export default function CoverLetterPreview({ text, company = '', resumeText = ''
       </div>
 
       <p className="font-lora text-sm text-ink/80 mt-6 mb-1">Sincerely,</p>
-      {name && <p className="font-montserrat font-bold text-sm text-teal-deeper">{name}</p>}
+      {name && <p className="font-montserrat font-bold text-sm text-ink">{name}</p>}
     </div>
   );
 }
