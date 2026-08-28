@@ -1,6 +1,7 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const ai = require('../services/anthropic');
+const { verifyListings } = require('../lib/verifyListings');
 
 const router = express.Router();
 
@@ -311,7 +312,11 @@ router.post('/find-listings', async (req, res, next) => {
       return res.json({ ...profile.discover_listings, cached: true, fetched_at: profile.discover_listings_at });
     }
 
-    const result = await ai.findListings(resumeData.raw_text, profile || {});
+    const raw = await ai.findListings(resumeData.raw_text, profile || {});
+
+    // Never surface a listing we cannot confirm exists. Dead links and
+    // non-existent hosts are dropped before the user ever sees them.
+    const result = await verifyListings(raw);
 
     await req.db
       .from('profiles')

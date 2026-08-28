@@ -72,8 +72,10 @@ function ListingCard({ listing, onPrep, prepping }) {
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1 font-montserrat text-xs font-semibold text-ink/50 hover:text-teal transition-colors"
+            title={listing.link_status === 'verified' ? 'Link checked and reachable' : 'Link could not be auto-checked (the board blocks automated requests)'}
           >
             View posting <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+            {listing.link_status === 'verified' && <span className="text-teal" aria-label="verified">✓</span>}
           </a>
         ) : <span />}
         <Button size="sm" onClick={onPrep} loading={prepping}>
@@ -255,6 +257,9 @@ export default function DiscoverTab({ hasResume, onJobAdded, onAddOwnJob }) {
               ))}
             </div>
             <p className="font-lora text-xs text-ink/30 mt-4 text-center">
+              {listings.verification
+                ? `Every link checked${listings.verification.dropped > 0 ? `; ${listings.verification.dropped} unverifiable posting${listings.verification.dropped === 1 ? '' : 's'} removed` : ''}. `
+                : ''}
               {listings.search_note}{listings.cached ? ' · Results cached — use "Search again" for a fresh sweep.' : ''}
             </p>
           </>

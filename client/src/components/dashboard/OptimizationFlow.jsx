@@ -215,6 +215,18 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                   ))}
                 </ul>
               )}
+              {rescoreResult.still_missing?.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-teal/15">
+                  <p className="font-montserrat text-[10px] uppercase tracking-widest text-copper mb-1.5">Still unresolved</p>
+                  <ul className="flex flex-col gap-1">
+                    {rescoreResult.still_missing.map((s, i) => (
+                      <li key={i} className="flex items-start gap-2 font-lora text-sm text-ink/70">
+                        <span className="text-copper flex-shrink-0">–</span>{s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

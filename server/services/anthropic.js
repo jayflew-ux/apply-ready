@@ -43,6 +43,17 @@ const RECRUITER_SYSTEM = `You are a senior recruiter with 20 years of placement 
 
 WRITING RULES for all output: no em dashes; complete grammatical sentences only, no fragments; warm, direct, and specific over generic; confident without boasting; no corporate jargon; no hollow inspiration; no templated openers.`;
 
+// One shared 0-100 definition so every score in the product means the same
+// thing, whether it comes from a listing match, a fit score, or a rescore.
+const SCORING_RUBRIC = `SCORING SCALE (use this exact scale for every 0-100 score you produce):
+- 85-100: Strong fit. Meets essentially every core requirement with evidence in the resume. A recruiter would submit this candidate today.
+- 70-84: Solid fit. Meets most core requirements. Any gaps are secondary or learnable on the job.
+- 55-69: Stretch. Meets several requirements but is missing something the posting treats as important, or is a level below the stated seniority.
+- 40-54: Reach. Real overlap exists, but multiple core requirements are unmet.
+- 0-39: Not a fit. The core of the role sits outside what the resume documents.
+
+Anchor on the posting's stated MUST-HAVE requirements, not on how impressive the resume is in general. A strong candidate applying to the wrong role scores low, and that is correct. Do not cluster scores in the 70s to be encouraging; use the full range honestly.`;
+
 function parseJSON(text) {
   try {
     const match = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
@@ -87,7 +98,9 @@ async function fitScore(resumeText, jobDescription) {
       },
       {
         type: 'text',
-        text: `Return ONLY valid JSON matching this exact schema — no other text:
+        text: `${SCORING_RUBRIC}
+
+Return ONLY valid JSON matching this exact schema — no other text:
 {
   "overall_score": <integer 0–100>,
   "category_scores": {
@@ -330,14 +343,25 @@ async function rescoreWithAnswers(resumeText, jobDescription, originalReport, an
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
       {
         type: 'text',
-        text: `You previously scored a candidate against a job posting. The candidate has now provided additional context that was missing from their resume. Recalculate the fit score incorporating this new information.
+        text: `${SCORING_RUBRIC}
+
+You previously scored a candidate against a job posting. The candidate has now answered follow-up questions. Re-score using the SAME scale above, applied the same way.
+
+HOW THE SCORE MAY MOVE — this is a re-evaluation, not a reward for participating:
+- It goes UP only where an answer supplies concrete, specific evidence against a requirement the posting actually states. Real projects, real numbers, real scope, real tools.
+- It stays THE SAME when answers are blank, vague, generic, aspirational, or merely restate what the resume already said. This is the common case. Leaving the score unchanged is a correct and expected outcome.
+- It goes DOWN if an answer reveals that experience is thinner than the resume implied.
+- Typical honest movement is 0 to 10 points. Movement beyond 15 points requires that the answers resolved a specific stated must-have requirement that the resume had genuinely failed to evidence. Do not inflate to make the candidate feel good; an unearned score gets them rejected later.
+
+Judge the answers on evidence, not enthusiasm. "I am a fast learner" changes nothing. "I ran a 40,000-subscriber Klaviyo program and lifted click rate 18 percent" changes something specific.
 
 Return ONLY valid JSON:
 {
   "overall_score": <integer 0–100>,
-  "score_change": <integer, positive or negative>,
-  "updated_why": "<2–3 sentences on how the new context changed the picture>",
-  "additional_strengths": ["<strength revealed by new context>"]
+  "score_change": <integer, positive, negative, or 0>,
+  "updated_why": "<2–3 sentences on what the answers did or did not change. If nothing changed, say so plainly and explain why.>",
+  "additional_strengths": ["<strength genuinely evidenced by the new answers — empty array if none>"],
+  "still_missing": ["<requirement from the posting the answers did not resolve — empty array if none>"]
 }`,
       },
     ],
@@ -413,12 +437,18 @@ async function findListings(resumeText, profile = {}) {
         type: 'text',
         text: `Use the web_search tool to find CURRENT, REAL job listings that match this candidate's resume and preferences. Search job boards and company career pages. Run several searches covering the candidate's strongest role matches and preferred regions.
 
-STRICT HONESTY RULES:
-- Include ONLY listings you actually found through search, with their real URLs. Never invent a listing, company, salary, or URL.
-- Prefer direct links to the specific posting. A search-results URL is acceptable only if no direct link surfaced.
-- If salary was not stated, use an empty string. If you found fewer than 5 solid listings, return fewer; do not pad.
+STRICT HONESTY RULES — these matter more than returning a full list:
+- Include ONLY specific job openings you actually saw in search results. Every listing must be a real posting at a real, identifiable company that is genuinely hiring.
+- Never invent a listing, a company, a salary, or a URL. Never list a plausible-sounding role that you did not actually find. Never describe a role the candidate "could pitch" or "might create" — only openings that exist and are accepting applicants.
+- The url must be the actual posting URL you found in the search results, copied exactly. Do not construct, guess, shorten, or pattern-match a URL. If you did not see a real URL for a listing, omit that listing entirely.
+- Prefer a direct link to the specific posting over a board's search page.
+- If salary was not stated in the posting, use an empty string. Never estimate one.
+- Skip anything that looks stale, closed, or is an aggregator stub with no real posting behind it.
+- Returning 3 verified real listings is a better outcome than 8 with two invented. Do not pad the list to hit a count.
 
-For each listing, estimate a match score from 0-100 against the resume and preferences, the way a recruiter would judge fit. Be honest; not everything is an 80.
+${SCORING_RUBRIC}
+
+Apply that same scale to each listing's match_score.
 
 After searching, return ONLY valid JSON — no markdown fences, no text outside the JSON:
 {
