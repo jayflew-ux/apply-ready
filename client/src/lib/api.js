@@ -108,6 +108,7 @@ export const api = {
     users: () => api.get('/admin/users'),
   },
   billing: {
+    status:   () => api.get('/billing/status'),
     checkout: () => api.post('/billing/checkout', {}),
     portal:   () => api.get('/billing/portal'),
   },

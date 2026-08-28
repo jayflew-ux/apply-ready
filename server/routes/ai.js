@@ -140,12 +140,14 @@ router.post('/score-questions/:userJobId', async (req, res, next) => {
   }
 });
 
-// Tailor resume — free accounts get FREE_RESUME_BUILDS complete builds,
-// subscribers are unlimited. Regenerating for the same job never counts.
-// Until Stripe is configured there is no way to pay, so the free allowance
-// stays at 5 rather than stranding users at a dead paywall.
-const BILLING_LIVE = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID);
-const FREE_RESUME_BUILDS = BILLING_LIVE ? 1 : 5;
+// Billing is live only when Stripe is fully configured AND free mode is off.
+// While it is off the whole app is free and unlimited — no paywall, no caps —
+// so nobody is stranded at an upgrade prompt they cannot act on.
+// To start charging: set the Stripe env vars and remove FREE_MODE.
+const FREE_MODE = process.env.FREE_MODE !== 'false';
+const BILLING_LIVE = !FREE_MODE
+  && Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID);
+const FREE_RESUME_BUILDS = 1; // applies only once BILLING_LIVE is true
 
 router.post('/tailor-resume/:userJobId', async (req, res, next) => {
   try {
@@ -163,7 +165,7 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
     const isSubscriber = profile?.subscription_status === 'active';
     const isRegeneration = Boolean(userJob?.tailored_resume_text);
 
-    if (!isSubscriber && !isRegeneration && buildsUsed >= FREE_RESUME_BUILDS) {
+    if (BILLING_LIVE && !isSubscriber && !isRegeneration && buildsUsed >= FREE_RESUME_BUILDS) {
       return res.status(403).json({
         error: 'You have used your free application build. Upgrade to keep building tailored resumes and cover letters for every role you pursue.',
         upgrade_required: true,
@@ -191,7 +193,11 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
         .eq('id', req.user.id);
     }
 
-    res.json({ tailored_resume_text: tailored, builds_used: isRegeneration ? buildsUsed : buildsUsed + 1, builds_limit: isSubscriber ? null : FREE_RESUME_BUILDS });
+    res.json({
+      tailored_resume_text: tailored,
+      builds_used: isRegeneration ? buildsUsed : buildsUsed + 1,
+      builds_limit: (!BILLING_LIVE || isSubscriber) ? null : FREE_RESUME_BUILDS,
+    });
   } catch (err) {
     next(err);
   }

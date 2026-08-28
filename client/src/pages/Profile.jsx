@@ -54,7 +54,14 @@ export default function Profile() {
   const [uploadError, setUploadError] = useState('');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [billingEnabled, setBillingEnabled] = useState(false);
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    api.billing.status()
+      .then(s => setBillingEnabled(Boolean(s?.billing_enabled)))
+      .catch(() => setBillingEnabled(false));
+  }, []);
 
   async function openPortal() {
     setPortalLoading(true);
@@ -250,7 +257,11 @@ export default function Profile() {
           {/* Plan section */}
           <div className="border-t border-[#e5e5e0] pt-8">
             <p className="font-montserrat font-semibold text-sm text-ink/80 tracking-wide mb-2">Your plan</p>
-            {profile?.subscription_status === 'active' ? (
+            {!billingEnabled ? (
+              <p className="font-lora text-sm text-ink/70">
+                <span className="font-montserrat font-bold text-teal">Free while in preview</span> — everything is unlocked, including unlimited tailored resumes, cover letters, and interview prep. No card needed.
+              </p>
+            ) : profile?.subscription_status === 'active' ? (
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="font-lora text-sm text-ink/70">
                   <span className="font-montserrat font-bold text-teal">Dream Job Ready Pro</span> — unlimited application builds.

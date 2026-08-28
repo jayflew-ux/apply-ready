@@ -2,20 +2,30 @@ const express = require('express');
 const auth = require('../middleware/auth');
 const { serviceClient } = require('../lib/db');
 
-// Billing stays dormant until STRIPE_SECRET_KEY is configured.
+// Billing stays dormant while FREE_MODE is on (the default) or until Stripe
+// is configured. Flip it on by setting the Stripe env vars and FREE_MODE=false.
+const FREE_MODE = process.env.FREE_MODE !== 'false';
 const stripeKey = process.env.STRIPE_SECRET_KEY;
-const stripe = stripeKey ? require('stripe')(stripeKey) : null;
+const stripe = (!FREE_MODE && stripeKey) ? require('stripe')(stripeKey) : null;
+
+// Lets the client render the right plan UI without guessing.
+const BILLING_ENABLED = Boolean(stripe && process.env.STRIPE_PRICE_ID);
 
 const APP_URL = (process.env.CLIENT_ORIGIN || 'http://localhost:5173').split(',')[0].trim();
 
 const router = express.Router();
 router.use(auth);
 
+// Whether paid plans are active. Client uses this to show the right plan UI.
+router.get('/status', (_req, res) => {
+  res.json({ billing_enabled: BILLING_ENABLED });
+});
+
 // Start a subscription checkout
 router.post('/checkout', async (req, res, next) => {
   try {
-    if (!stripe || !process.env.STRIPE_PRICE_ID) {
-      return res.status(503).json({ error: 'Billing is not configured yet. Please check back soon.' });
+    if (!BILLING_ENABLED) {
+      return res.status(503).json({ error: 'Dream Job Ready is free right now — no payment needed.' });
     }
 
     const { data: profile } = await serviceClient
