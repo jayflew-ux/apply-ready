@@ -32,7 +32,9 @@
 
   body {
     font-family: 'Lora', Georgia, serif;
-    background-color: var(--linen);
+    /* Transparent so the fixed atmosphere layer behind it is visible; the
+       linen base lives on <html> as the fallback. */
+    background-color: transparent;
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
