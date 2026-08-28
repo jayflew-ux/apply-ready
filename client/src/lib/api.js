@@ -106,7 +106,8 @@ export const api = {
     coverLetter: (id)  => request('POST', `/documents/cover-letter/${id}`, {}),
   },
   admin: {
-    users: () => api.get('/admin/users'),
+    users:         () => api.get('/admin/users'),
+    sweepListings: () => api.post('/admin/sweep-listings', {}),
   },
   billing: {
     status:   () => api.get('/billing/status'),

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
 import Spinner from '../components/ui/Spinner';
+import Button from '../components/ui/Button';
 
 // Rough cost estimate for display. Fable 5 is used for resumes/letters,
 // Opus for scoring, Haiku for chat — we don't track per-model split here,
@@ -35,6 +36,21 @@ export default function Admin() {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState('');
+  const [sweeping, setSweeping] = useState(false);
+  const [sweepResult, setSweepResult] = useState(null);
+
+  async function runSweep() {
+    setSweeping(true);
+    setSweepResult(null);
+    try {
+      const r = await api.admin.sweepListings();
+      setSweepResult(r);
+    } catch (e) {
+      setSweepResult({ error: e.message });
+    } finally {
+      setSweeping(false);
+    }
+  }
 
   useEffect(() => {
     api.admin.users()
@@ -78,6 +94,49 @@ export default function Admin() {
           <StatCard label="Resumes built" value={totals.resumes} />
           <StatCard label="Total tokens" value={fmt(totals.input_tokens + totals.output_tokens)} sub={`${fmt(totals.input_tokens)} in / ${fmt(totals.output_tokens)} out`} />
           <StatCard label="Est. AI cost" value={'$' + estimateCost(totals.input_tokens, totals.output_tokens).toFixed(2)} sub={`${totals.ai_calls} calls`} />
+        </div>
+
+        {/* Listing maintenance */}
+        <div className="bg-white border border-[#e5e5e0] rounded-sm p-4 mb-6">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-montserrat font-semibold text-sm text-ink/80">Clean up saved job listings</p>
+              <p className="font-lora text-xs text-ink/50 mt-0.5 max-w-xl leading-relaxed">
+                Checks every listing saved in every account and removes any that are closed, filled, or dead.
+                Costs no AI spend. Listings are also rechecked automatically whenever a user opens Discover.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={runSweep} loading={sweeping}>
+              Run sweep
+            </Button>
+          </div>
+
+          {sweepResult && (
+            <div className="mt-3 pt-3 border-t border-[#e5e5e0]">
+              {sweepResult.error ? (
+                <p className="font-lora text-sm text-red-600">{sweepResult.error}</p>
+              ) : (
+                <>
+                  <p className="font-lora text-sm text-ink/80">
+                    Scanned {sweepResult.accounts_scanned} account{sweepResult.accounts_scanned === 1 ? '' : 's'} and{' '}
+                    {sweepResult.listings_checked} listing{sweepResult.listings_checked === 1 ? '' : 's'}.{' '}
+                    {sweepResult.listings_removed > 0
+                      ? `Removed ${sweepResult.listings_removed} stale listing${sweepResult.listings_removed === 1 ? '' : 's'} across ${sweepResult.accounts_updated} account${sweepResult.accounts_updated === 1 ? '' : 's'}.`
+                      : 'Everything still checks out; nothing removed.'}
+                  </p>
+                  {sweepResult.details?.length > 0 && (
+                    <ul className="mt-2 flex flex-col gap-1">
+                      {sweepResult.details.map((d, i) => (
+                        <li key={i} className="font-lora text-xs text-ink/50">
+                          {d.email}: {d.before} → {d.after} ({d.removed} removed)
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* User table */}

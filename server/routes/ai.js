@@ -365,7 +365,26 @@ router.post('/find-listings', async (req, res, next) => {
     const fresh = cachedAt && (Date.now() - cachedAt.getTime()) < LISTINGS_CACHE_HOURS * 3600 * 1000;
 
     if (!force && fresh && profile?.discover_listings) {
-      return res.json({ ...profile.discover_listings, cached: true, fetched_at: profile.discover_listings_at });
+      // A cached list can go stale between sweeps: roles get filled and
+      // postings close. Re-check the links (cheap HTTP, no AI) so a closed
+      // job is never shown, then persist the cleaned list.
+      const revalidated = await verifyListings(profile.discover_listings);
+      const removed =
+        (profile.discover_listings.listings?.length || 0) - (revalidated.listings?.length || 0);
+
+      if (removed > 0) {
+        await req.db
+          .from('profiles')
+          .update({ discover_listings: revalidated })
+          .eq('id', req.user.id);
+      }
+
+      return res.json({
+        ...revalidated,
+        cached: true,
+        rechecked: true,
+        fetched_at: profile.discover_listings_at,
+      });
     }
 
     const raw = await ai.findListings(resumeData.raw_text, profile || {});
