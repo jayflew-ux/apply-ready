@@ -58,7 +58,7 @@ export default function Step2Style({ onComplete }) {
           <label
             key={s.value}
             className={`flex items-start gap-4 px-4 py-4 border rounded-sm cursor-pointer transition-all ${
-              selected === s.value ? 'border-teal bg-teal/5' : 'border-[#e5e5e0] hover:border-teal/30'
+              selected === s.value ? 'border-teal bg-teal/5' : 'border-[#e3ddd2] hover:border-teal/30'
             }`}
           >
             <input

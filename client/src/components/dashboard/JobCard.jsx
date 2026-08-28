@@ -52,7 +52,7 @@ export default function JobCard({
     : null;
 
   return (
-    <div className="bg-linen border border-[#e5e5e0] rounded-sm p-5 flex flex-col gap-4 hover:border-teal/20 transition-colors">
+    <div className="surface border border-[#e3ddd2] rounded-sm p-5 flex flex-col gap-4 hover:border-teal/20 transition-colors">
       {/* Header */}
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
@@ -97,7 +97,7 @@ export default function JobCard({
 
       {/* Actions */}
       {showActions && (
-        <div className="flex items-center gap-2 pt-1 border-t border-[#e5e5e0]">
+        <div className="flex items-center gap-2 pt-1 border-t border-[#e3ddd2]">
           <Button
             size="sm"
             variant="ghost"

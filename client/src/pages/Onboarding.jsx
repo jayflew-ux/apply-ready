@@ -38,13 +38,13 @@ export default function Onboarding() {
   }
 
   if (checking) return (
-    <div className="min-h-screen bg-linen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <Spinner size="lg" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-linen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <header className="max-w-2xl mx-auto w-full px-6 py-6">
         <span className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase">Dream Job Ready</span>
       </header>
@@ -58,7 +58,7 @@ export default function Onboarding() {
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-montserrat font-bold border transition-colors ${
                   step === s.number ? 'border-teal bg-teal text-white' :
                   step > s.number  ? 'border-teal bg-teal/10 text-teal' :
-                  'border-[#e5e5e0] text-ink/40'
+                  'border-[#e3ddd2] text-ink/40'
                 }`}>
                   {step > s.number ? '✓' : s.number}
                 </div>

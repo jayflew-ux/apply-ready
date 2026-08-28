@@ -153,20 +153,20 @@ export default function Profile() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-linen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <Spinner size="lg" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-linen">
+    <div className="min-h-screen">
       <header className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
         <Link to="/dashboard" className="font-montserrat font-bold text-teal text-sm tracking-widest uppercase">Dream Job Ready</Link>
         <button onClick={signOut} className="font-lora text-sm text-ink/50 hover:text-ink transition-colors">Sign out</button>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 pb-20">
-        <div className="py-8 border-b border-[#e5e5e0] mb-8">
+        <div className="py-8 border-b border-[#e3ddd2] mb-8">
           <p className="font-montserrat text-xs uppercase tracking-widest text-copper mb-2">Settings</p>
           <h1 className="font-montserrat font-bold text-2xl text-teal-deeper">Your Profile</h1>
           <p className="font-lora text-sm text-ink/60 mt-1">{user?.email}</p>
@@ -179,7 +179,7 @@ export default function Profile() {
             <label className="block text-sm font-montserrat font-semibold text-ink/80 mb-3 tracking-wide">Situation</label>
             <div className="grid grid-cols-2 gap-2">
               {SITUATIONS.map(s => (
-                <label key={s.value} className={`flex items-center gap-2 px-3 py-2 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${form.situation === s.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/70 hover:border-teal/30'}`}>
+                <label key={s.value} className={`flex items-center gap-2 px-3 py-2 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${form.situation === s.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/70 hover:border-teal/30'}`}>
                   <input type="radio" name="situation" value={s.value} checked={form.situation === s.value} onChange={() => set('situation', s.value)} className="sr-only" />
                   {s.label}
                 </label>
@@ -194,7 +194,7 @@ export default function Profile() {
             <label className="block text-sm font-montserrat font-semibold text-ink/80 mb-3 tracking-wide">Default resume style</label>
             <div className="flex flex-wrap gap-2">
               {STYLES.map(s => (
-                <label key={s.value} className={`px-4 py-2 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${form.resume_style === s.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/70 hover:border-teal/30'}`}>
+                <label key={s.value} className={`px-4 py-2 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${form.resume_style === s.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/70 hover:border-teal/30'}`}>
                   <input type="radio" name="resume_style" value={s.value} checked={form.resume_style === s.value} onChange={() => set('resume_style', s.value)} className="sr-only" />
                   {s.label}
                 </label>
@@ -227,7 +227,7 @@ export default function Profile() {
             <label className="block text-sm font-montserrat font-semibold text-ink/80 mb-3 tracking-wide">Work arrangement</label>
             <div className="flex flex-wrap gap-2">
               {REMOTE_PREFS.map(r => (
-                <label key={r.value} className={`px-4 py-2 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${form.remote_preference === r.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/70 hover:border-teal/30'}`}>
+                <label key={r.value} className={`px-4 py-2 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${form.remote_preference === r.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/70 hover:border-teal/30'}`}>
                   <input type="radio" name="remote_preference" value={r.value} checked={form.remote_preference === r.value} onChange={() => set('remote_preference', r.value)} className="sr-only" />
                   {r.label}
                 </label>
@@ -247,7 +247,7 @@ export default function Profile() {
             <label className="block text-sm font-montserrat font-semibold text-ink/80 mb-1.5 tracking-wide">Larger build note</label>
             <p className="text-xs font-lora text-ink/50 mb-2">Work a role must serve, not strangle. Optional.</p>
             <textarea
-              className="w-full px-3 py-2.5 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y min-h-[80px]"
+              className="w-full px-3 py-2.5 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y min-h-[80px]"
               placeholder="e.g. Building toward a COO or GM role within 5 years. Needs to develop P&L ownership."
               value={form.larger_build_note || ''}
               onChange={e => set('larger_build_note', e.target.value)}
@@ -255,7 +255,7 @@ export default function Profile() {
           </div>
 
           {/* Plan section */}
-          <div className="border-t border-[#e5e5e0] pt-8">
+          <div className="border-t border-[#e3ddd2] pt-8">
             <p className="font-montserrat font-semibold text-sm text-ink/80 tracking-wide mb-2">Your plan</p>
             {!billingEnabled ? (
               <p className="font-lora text-sm text-ink/70">
@@ -283,7 +283,7 @@ export default function Profile() {
           </div>
 
           {/* Resume section */}
-          <div className="border-t border-[#e5e5e0] pt-8">
+          <div className="border-t border-[#e3ddd2] pt-8">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
                 <p className="font-montserrat font-semibold text-sm text-ink/80 tracking-wide mb-1">Resume on file</p>
@@ -310,7 +310,7 @@ export default function Profile() {
             </div>
 
             {resumeMode && (
-              <div className="flex flex-col gap-4 bg-white border border-[#e5e5e0] rounded-sm p-4">
+              <div className="flex flex-col gap-4 surface border border-[#e3ddd2] rounded-sm p-4">
                 <div className="flex gap-2">
                   <button
                     onClick={() => setResumeMode('file')}
@@ -332,7 +332,7 @@ export default function Profile() {
                     <button
                       onClick={() => fileRef.current?.click()}
                       disabled={uploading}
-                      className="flex items-center justify-center gap-2 w-full py-8 border-2 border-dashed border-[#e5e5e0] rounded-sm text-ink/40 hover:border-teal/40 hover:text-teal transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 w-full py-8 border-2 border-dashed border-[#e3ddd2] rounded-sm text-ink/40 hover:border-teal/40 hover:text-teal transition-colors disabled:opacity-50"
                     >
                       {uploading ? <Spinner size="sm" /> : <ArrowUpTrayIcon className="w-5 h-5" />}
                       <span className="font-lora text-sm">{uploading ? 'Uploading...' : 'Click to choose a PDF or Word doc'}</span>
@@ -343,7 +343,7 @@ export default function Profile() {
                 {resumeMode === 'text' && (
                   <div className="flex flex-col gap-3">
                     <textarea
-                      className="w-full px-3 py-2.5 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y min-h-[200px]"
+                      className="w-full px-3 py-2.5 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y min-h-[200px]"
                       placeholder="Paste your resume text here..."
                       value={resumeText}
                       onChange={e => setResumeText(e.target.value)}

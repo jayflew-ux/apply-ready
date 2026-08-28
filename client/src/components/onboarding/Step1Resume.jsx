@@ -79,13 +79,13 @@ export default function Step1Resume({ onComplete }) {
         <div className="flex gap-3 mb-5">
           <button
             onClick={() => setMode('upload')}
-            className={`px-4 py-1.5 text-sm font-montserrat font-semibold rounded-sm border transition-colors ${mode === 'upload' ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/60 hover:border-teal/30'}`}
+            className={`px-4 py-1.5 text-sm font-montserrat font-semibold rounded-sm border transition-colors ${mode === 'upload' ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/60 hover:border-teal/30'}`}
           >
             Upload file
           </button>
           <button
             onClick={() => setMode('paste')}
-            className={`px-4 py-1.5 text-sm font-montserrat font-semibold rounded-sm border transition-colors ${mode === 'paste' ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/60 hover:border-teal/30'}`}
+            className={`px-4 py-1.5 text-sm font-montserrat font-semibold rounded-sm border transition-colors ${mode === 'paste' ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/60 hover:border-teal/30'}`}
           >
             Paste text
           </button>
@@ -95,7 +95,7 @@ export default function Step1Resume({ onComplete }) {
           <div
             {...getRootProps()}
             className={`border-2 border-dashed rounded-sm px-8 py-12 text-center cursor-pointer transition-colors ${
-              isDragActive ? 'border-teal bg-teal/5' : file ? 'border-teal/40 bg-teal/5' : 'border-[#e5e5e0] hover:border-teal/40'
+              isDragActive ? 'border-teal bg-teal/5' : file ? 'border-teal/40 bg-teal/5' : 'border-[#e3ddd2] hover:border-teal/40'
             }`}
           >
             <input {...getInputProps()} />
@@ -117,7 +117,7 @@ export default function Step1Resume({ onComplete }) {
           </div>
         ) : (
           <textarea
-            className="w-full h-48 px-4 py-3 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y"
+            className="w-full h-48 px-4 py-3 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y"
             placeholder="Paste your full resume text here..."
             value={pastedText}
             onChange={e => setPasted(e.target.value)}
@@ -132,7 +132,7 @@ export default function Step1Resume({ onComplete }) {
           {SITUATIONS.map(s => (
             <label
               key={s.value}
-              className={`flex items-center gap-2 px-3 py-2.5 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${situation === s.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/70 hover:border-teal/30'}`}
+              className={`flex items-center gap-2 px-3 py-2.5 border rounded-sm cursor-pointer text-sm font-lora transition-colors ${situation === s.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/70 hover:border-teal/30'}`}
             >
               <input
                 type="radio"
@@ -150,7 +150,7 @@ export default function Step1Resume({ onComplete }) {
         {situation === 'other' && (
           <input
             type="text"
-            className="mt-3 w-full px-3 py-2.5 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
+            className="mt-3 w-full px-3 py-2.5 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
             placeholder="Describe your situation..."
             value={situationOther}
             onChange={e => setOther(e.target.value)}

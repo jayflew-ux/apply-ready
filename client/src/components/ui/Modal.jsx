@@ -23,11 +23,11 @@ export default function Modal({ open, onClose, title, children, wide = false }) 
       />
       <div
         className={[
-          'relative bg-linen border border-[#e5e5e0] rounded-sm shadow-xl w-full max-h-[80vh] overflow-y-auto',
+          'relative surface border border-[#e3ddd2] rounded-sm shadow-xl w-full max-h-[80vh] overflow-y-auto',
           wide ? 'max-w-3xl' : 'max-w-xl',
         ].join(' ')}
       >
-        <div className="sticky top-0 bg-linen z-10 flex items-center justify-between px-6 py-4 border-b border-[#e5e5e0]">
+        <div className="sticky top-0 surface z-10 flex items-center justify-between px-6 py-4 border-b border-[#e3ddd2]">
           {title && (
             <h2 className="font-montserrat font-bold text-base text-ink tracking-wide">{title}</h2>
           )}

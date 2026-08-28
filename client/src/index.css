@@ -2,18 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Dream Design Studio signature: an ethereal-editorial palette of navy, gold,
+ * and linen over a soft cosmic-cloud atmosphere with a linen veil and film
+ * grain. The atmosphere is fixed behind everything so pages feel like they sit
+ * on one continuous sky.
+ *
+ * Note: the candidate's own documents (resume, cover letter) deliberately stay
+ * classic black and grey. This styling is for the app, not their applications.
+ */
 @layer base {
+  :root {
+    --navy:       #083a4f;
+    --navy-deep:  #052a3a;
+    --gold:       #a58d66;
+    --gold-soft:  #c9b896;
+    --aqua:       #c0d5d6;
+    --teal:       #407e8c;
+    --linen:      #faf7f1;
+    --cream:      #fffdf8;
+    --ink:        #1c2b33;
+    --muted:      #5c6e76;
+  }
+
   html {
-    background-color: #fffdf5;
-    color: #2c2c2c;
+    background-color: var(--linen);
+    color: var(--ink);
   }
 
   body {
     font-family: 'Lora', Georgia, serif;
-    background-color: #fffdf5;
-    color: #2c2c2c;
+    background-color: var(--linen);
+    color: var(--ink);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* The atmosphere: cloud imagery, washed back behind a linen veil. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(250, 247, 241, 0.86) 0%,
+        rgba(250, 247, 241, 0.72) 38%,
+        rgba(250, 247, 241, 0.90) 100%
+      ),
+      url('/atmosphere.jpg') center top / cover no-repeat fixed;
+    pointer-events: none;
+  }
+
+  /* Film grain, so the wash reads as texture rather than a flat gradient. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.42;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0.9 0.9 0 -1.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   }
 
   h1, h2, h3, h4, h5, h6,
@@ -22,34 +74,48 @@
   }
 
   * {
-    border-color: #e5e5e0;
+    border-color: #e3ddd2;
   }
 
   ::selection {
-    background-color: #1e8b8b22;
+    background-color: rgba(8, 58, 79, 0.14);
   }
 }
 
 @layer components {
+  /* Editorial display type for hero moments. */
+  .font-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
   .rule-teal {
     height: 1px;
-    background: linear-gradient(to right, #1e8b8b, #1e8b8b88, transparent);
+    background: linear-gradient(to right, var(--navy), rgba(8, 58, 79, 0.45), transparent);
   }
 
   .rule-copper {
     height: 1px;
-    background: linear-gradient(to right, #c87b33, #edcf30, transparent);
+    background: linear-gradient(to right, var(--gold), var(--gold-soft), transparent);
   }
 
   .teal-link {
     @apply text-teal hover:text-teal-dark underline-offset-2 hover:underline transition-colors;
   }
 
+  /* Surfaces float on the atmosphere rather than sitting flat on it. */
   .card {
-    @apply bg-linen border border-[#e5e5e0] rounded-sm;
+    @apply border rounded-sm;
+    background: rgba(255, 253, 248, 0.82);
+    backdrop-filter: blur(6px);
+    border-color: rgba(227, 221, 210, 0.9);
   }
 
-  .score-ring-strong  { color: #1e8b8b; }
-  .score-ring-mid     { color: #c87b33; }
+  .surface {
+    background: rgba(255, 253, 248, 0.86);
+    backdrop-filter: blur(8px);
+  }
+
+  .score-ring-strong  { color: var(--navy); }
+  .score-ring-mid     { color: var(--gold); }
   .score-ring-weak    { color: #b0392e; }
 }

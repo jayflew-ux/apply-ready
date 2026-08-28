@@ -39,7 +39,7 @@ export default function SubmittedTab({ jobs, loading, onJourneyUpdate }) {
         return (
           <div
             key={item.id}
-            className="bg-linen border border-[#e5e5e0] rounded-sm p-5 flex flex-col gap-3"
+            className="surface border border-[#e3ddd2] rounded-sm p-5 flex flex-col gap-3"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -76,7 +76,7 @@ export default function SubmittedTab({ jobs, loading, onJourneyUpdate }) {
             )}
 
             {(item.hasResume || item.hasCoverLetter) && (
-              <div className="border-t border-[#e5e5e0] pt-3">
+              <div className="border-t border-[#e3ddd2] pt-3">
                 <SavedDocuments
                   userJobId={item.id}
                   job={j}
@@ -86,7 +86,7 @@ export default function SubmittedTab({ jobs, loading, onJourneyUpdate }) {
               </div>
             )}
 
-            <div className="border-t border-[#e5e5e0] pt-3">
+            <div className="border-t border-[#e3ddd2] pt-3">
               <JourneyTracker
                 userJobId={item.id}
                 journeyStatus={item.journey_status}

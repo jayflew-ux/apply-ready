@@ -13,7 +13,7 @@ const Input = forwardRef(({ label, hint, error, className = '', ...props }, ref)
         'w-full px-3 py-2.5 bg-white border rounded-sm font-lora text-sm text-ink',
         'placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal focus:border-teal',
         'disabled:opacity-50 disabled:bg-gray-50',
-        error ? 'border-red-400' : 'border-[#e5e5e0]',
+        error ? 'border-red-400' : 'border-[#e3ddd2]',
         className,
       ].join(' ')}
       {...props}
@@ -38,7 +38,7 @@ export function Textarea({ label, hint, error, className = '', ...props }) {
           'w-full px-3 py-2.5 bg-white border rounded-sm font-lora text-sm text-ink',
           'placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal focus:border-teal',
           'resize-y min-h-[120px]',
-          error ? 'border-red-400' : 'border-[#e5e5e0]',
+          error ? 'border-red-400' : 'border-[#e3ddd2]',
           className,
         ].join(' ')}
         {...props}

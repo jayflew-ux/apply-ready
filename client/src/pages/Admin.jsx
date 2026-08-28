@@ -23,7 +23,7 @@ function fmt(n) {
 
 function StatCard({ label, value, sub }) {
   return (
-    <div className="bg-white border border-[#e5e5e0] rounded-sm p-4">
+    <div className="surface border border-[#e3ddd2] rounded-sm p-4">
       <p className="font-montserrat text-[10px] uppercase tracking-widest text-copper mb-1">{label}</p>
       <p className="font-montserrat font-bold text-2xl text-teal-deeper">{value}</p>
       {sub && <p className="font-lora text-xs text-ink/50 mt-0.5">{sub}</p>}
@@ -60,13 +60,13 @@ export default function Admin() {
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-linen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <Spinner size="lg" />
     </div>
   );
 
   if (error) return (
-    <div className="min-h-screen bg-linen flex flex-col items-center justify-center gap-4 px-6 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
       <p className="font-montserrat font-bold text-lg text-teal-deeper">Access denied</p>
       <p className="font-lora text-sm text-ink/60">{error}</p>
       <Link to="/dashboard" className="font-lora text-sm text-teal underline">Back to dashboard</Link>
@@ -76,8 +76,8 @@ export default function Admin() {
   const { users, totals } = data;
 
   return (
-    <div className="min-h-screen bg-linen">
-      <header className="sticky top-0 z-10 bg-linen/95 backdrop-blur-sm border-b border-[#e5e5e0]">
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-10 bg-cream/70 backdrop-blur-md border-b border-[#e3ddd2]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/dashboard" className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase">Dream Job Ready</Link>
@@ -97,7 +97,7 @@ export default function Admin() {
         </div>
 
         {/* Listing maintenance */}
-        <div className="bg-white border border-[#e5e5e0] rounded-sm p-4 mb-6">
+        <div className="surface border border-[#e3ddd2] rounded-sm p-4 mb-6">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <p className="font-montserrat font-semibold text-sm text-ink/80">Clean up saved job listings</p>
@@ -112,7 +112,7 @@ export default function Admin() {
           </div>
 
           {sweepResult && (
-            <div className="mt-3 pt-3 border-t border-[#e5e5e0]">
+            <div className="mt-3 pt-3 border-t border-[#e3ddd2]">
               {sweepResult.error ? (
                 <p className="font-lora text-sm text-red-600">{sweepResult.error}</p>
               ) : (
@@ -140,11 +140,11 @@ export default function Admin() {
         </div>
 
         {/* User table */}
-        <div className="bg-white border border-[#e5e5e0] rounded-sm overflow-hidden">
+        <div className="surface border border-[#e3ddd2] rounded-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-[#e5e5e0] bg-[#faf8f0]">
+                <tr className="border-b border-[#e3ddd2] bg-[#faf8f0]">
                   {['Name', 'Email', 'Plan', 'Resumes', 'Tokens (in/out)', 'AI calls', 'Est. cost', 'Joined'].map(h => (
                     <th key={h} className="px-4 py-3 font-montserrat text-[10px] uppercase tracking-widest text-ink/50 whitespace-nowrap">{h}</th>
                   ))}

@@ -71,11 +71,11 @@ export default function ChatWidget() {
       {/* Chat panel */}
       {open && (
         <div
-          className="fixed bottom-20 right-4 sm:right-6 z-50 flex flex-col bg-linen border border-[#e5e5e0] rounded-sm shadow-xl"
+          className="fixed bottom-20 right-4 sm:right-6 z-50 flex flex-col surface border border-[#e3ddd2] rounded-sm shadow-xl"
           style={{ width: 'min(380px, calc(100vw - 2rem))', height: '480px' }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e0] flex-shrink-0 bg-white rounded-t-sm">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e3ddd2] flex-shrink-0 bg-white rounded-t-sm">
             <div>
               <p className="font-montserrat font-bold text-sm text-teal-deeper">Dream Job Ready Assistant</p>
               <p className="font-lora text-xs text-ink/40">Ask me anything</p>
@@ -95,7 +95,7 @@ export default function ChatWidget() {
                 <div className={`max-w-[85%] px-3 py-2.5 rounded-sm font-lora text-sm leading-relaxed whitespace-pre-wrap ${
                   m.role === 'user'
                     ? 'bg-teal text-white'
-                    : 'bg-white border border-[#e5e5e0] text-ink/80'
+                    : 'surface border border-[#e3ddd2] text-ink/80'
                 }`}>
                   {m.content}
                 </div>
@@ -104,7 +104,7 @@ export default function ChatWidget() {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white border border-[#e5e5e0] px-4 py-3 rounded-sm">
+                <div className="surface border border-[#e3ddd2] px-4 py-3 rounded-sm">
                   <Spinner size="sm" />
                 </div>
               </div>
@@ -114,10 +114,10 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <div className="flex items-center gap-2 px-3 py-3 border-t border-[#e5e5e0] flex-shrink-0 bg-white rounded-b-sm">
+          <div className="flex items-center gap-2 px-3 py-3 border-t border-[#e3ddd2] flex-shrink-0 bg-white rounded-b-sm">
             <input
               ref={inputRef}
-              className="flex-1 px-3 py-2 bg-linen border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
+              className="flex-1 px-3 py-2 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
               placeholder="Ask a question..."
               value={input}
               onChange={e => setInput(e.target.value)}

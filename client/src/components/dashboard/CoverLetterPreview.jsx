@@ -13,7 +13,7 @@ export default function CoverLetterPreview({ text, company = '', resumeText = ''
   const paragraphs = text.split(/\n\n+/).filter(Boolean);
 
   return (
-    <div className="bg-white rounded-sm border border-[#e5e5e0] shadow-sm p-8 text-left">
+    <div className="bg-white rounded-sm border border-[#e3ddd2] shadow-sm p-8 text-left">
       {(name || contact) && (
         <div className="pb-3 mb-5">
           {name && <p className="font-montserrat font-extrabold text-lg text-ink">{name}</p>}

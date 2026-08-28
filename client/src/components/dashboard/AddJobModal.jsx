@@ -83,7 +83,7 @@ export default function AddJobModal({ open, onClose, onAdded }) {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${inputMode === m ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/50 hover:border-teal/30'}`}
+              className={`px-3 py-1.5 text-xs font-montserrat font-semibold rounded-sm border transition-colors ${inputMode === m ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/50 hover:border-teal/30'}`}
             >
               {l}
             </button>
@@ -93,7 +93,7 @@ export default function AddJobModal({ open, onClose, onAdded }) {
         {/* Content input */}
         {inputMode === 'text' && (
           <textarea
-            className="w-full h-40 px-3 py-2.5 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y"
+            className="w-full h-40 px-3 py-2.5 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y"
             placeholder="Paste the full job posting here..."
             value={text}
             onChange={e => setText(e.target.value)}
@@ -111,7 +111,7 @@ export default function AddJobModal({ open, onClose, onAdded }) {
         {inputMode === 'file' && (
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-sm px-6 py-8 text-center cursor-pointer transition-colors ${isDragActive ? 'border-teal bg-teal/5' : file ? 'border-teal/40 bg-teal/5' : 'border-[#e5e5e0] hover:border-teal/40'}`}
+            className={`border-2 border-dashed rounded-sm px-6 py-8 text-center cursor-pointer transition-colors ${isDragActive ? 'border-teal bg-teal/5' : file ? 'border-teal/40 bg-teal/5' : 'border-[#e3ddd2] hover:border-teal/40'}`}
           >
             <input {...getInputProps()} />
             {file ? (

@@ -112,7 +112,7 @@ export default function Step3Roles({ onComplete }) {
                 className={`px-3 py-1.5 text-sm font-lora border rounded-sm transition-colors ${
                   selectedRoles.includes(r.title)
                     ? 'border-teal bg-teal/5 text-teal'
-                    : 'border-[#e5e5e0] text-ink/70 hover:border-teal/30'
+                    : 'border-[#e3ddd2] text-ink/70 hover:border-teal/30'
                 }`}
               >
                 {r.title}
@@ -135,9 +135,9 @@ export default function Step3Roles({ onComplete }) {
             onChange={e => setCustomRole(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addCustomRole()}
             placeholder="Add another role..."
-            className="flex-1 px-3 py-2 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
+            className="flex-1 px-3 py-2 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
           />
-          <button onClick={addCustomRole} className="p-2 border border-[#e5e5e0] rounded-sm hover:border-teal text-ink/50 hover:text-teal transition-colors">
+          <button onClick={addCustomRole} className="p-2 border border-[#e3ddd2] rounded-sm hover:border-teal text-ink/50 hover:text-teal transition-colors">
             <PlusIcon className="w-4 h-4" />
           </button>
         </div>
@@ -155,7 +155,7 @@ export default function Step3Roles({ onComplete }) {
               className={`px-3 py-1.5 text-sm font-lora border rounded-sm transition-colors ${
                 selectedRegions.includes(region)
                   ? 'border-teal bg-teal/5 text-teal'
-                  : 'border-[#e5e5e0] text-ink/70 hover:border-teal/30'
+                  : 'border-[#e3ddd2] text-ink/70 hover:border-teal/30'
               }`}
             >
               {region}
@@ -170,9 +170,9 @@ export default function Step3Roles({ onComplete }) {
             onChange={e => setCustomRegion(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addCustomRegion()}
             placeholder="Add another region..."
-            className="flex-1 px-3 py-2 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
+            className="flex-1 px-3 py-2 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
           />
-          <button onClick={addCustomRegion} className="p-2 border border-[#e5e5e0] rounded-sm hover:border-teal text-ink/50 hover:text-teal transition-colors">
+          <button onClick={addCustomRegion} className="p-2 border border-[#e3ddd2] rounded-sm hover:border-teal text-ink/50 hover:text-teal transition-colors">
             <PlusIcon className="w-4 h-4" />
           </button>
         </div>
@@ -186,7 +186,7 @@ export default function Step3Roles({ onComplete }) {
             <button
               key={r.value}
               onClick={() => setRemote(r.value)}
-              className={`px-4 py-2 text-sm font-lora border rounded-sm transition-colors ${remotePref === r.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e5e5e0] text-ink/70 hover:border-teal/30'}`}
+              className={`px-4 py-2 text-sm font-lora border rounded-sm transition-colors ${remotePref === r.value ? 'border-teal bg-teal/5 text-teal' : 'border-[#e3ddd2] text-ink/70 hover:border-teal/30'}`}
             >
               {r.label}
             </button>
@@ -203,7 +203,7 @@ export default function Step3Roles({ onComplete }) {
             placeholder="e.g. Senior, Lead, Manager"
             value={seniority}
             onChange={e => setSeniority(e.target.value)}
-            className="w-full px-3 py-2.5 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
+            className="w-full px-3 py-2.5 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
           />
         </div>
         <div>
@@ -213,7 +213,7 @@ export default function Step3Roles({ onComplete }) {
             placeholder="e.g. 120000"
             value={compFloor}
             onChange={e => setComp(e.target.value)}
-            className="w-full px-3 py-2.5 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
+            className="w-full px-3 py-2.5 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal"
           />
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function Step3Roles({ onComplete }) {
         <label className="block font-montserrat font-semibold text-sm text-ink/80 mb-1 tracking-wide">Larger build note</label>
         <p className="font-lora text-xs text-ink/50 mb-2">Work a role must serve, not strangle. Optional.</p>
         <textarea
-          className="w-full px-3 py-2.5 bg-white border border-[#e5e5e0] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y min-h-[72px]"
+          className="w-full px-3 py-2.5 surface border border-[#e3ddd2] rounded-sm font-lora text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-1 focus:ring-teal resize-y min-h-[72px]"
           placeholder="e.g. Building toward a COO role. Needs to develop P&L ownership without sacrificing comp or title arc."
           value={largerBuild}
           onChange={e => setLarger(e.target.value)}

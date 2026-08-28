@@ -246,7 +246,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
               <div className={`w-6 h-6 rounded-full text-xs font-montserrat font-bold flex items-center justify-center border transition-colors ${
                 step === i     ? 'border-teal bg-teal text-white' :
                 canVisit(i)    ? 'border-teal/40 bg-teal/10 text-teal hover:bg-teal/20' :
-                'border-[#e5e5e0] text-ink/30'
+                'border-[#e3ddd2] text-ink/30'
               }`}>
                 {step > i ? '✓' : i + 1}
               </div>
@@ -416,7 +416,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
               </p>
 
               {/* Feedback loop — recourse when the output is not what they expected */}
-              <div className="bg-white border border-[#e5e5e0] rounded-sm p-4">
+              <div className="surface border border-[#e3ddd2] rounded-sm p-4">
                 {reviseNote && !feedbackOpen && (
                   <p className="font-lora text-xs text-teal mb-2">{reviseNote}</p>
                 )}
@@ -441,7 +441,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                     </div>
 
                     {versions.length > 1 && (
-                      <div className="pt-3 border-t border-[#e5e5e0]">
+                      <div className="pt-3 border-t border-[#e3ddd2]">
                         <button
                           onClick={() => setShowVersions(v => !v)}
                           className="font-montserrat text-xs font-semibold text-teal hover:text-teal-deeper transition-colors"
@@ -456,7 +456,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                               return (
                                 <div
                                   key={i}
-                                  className={`flex items-start justify-between gap-3 px-3 py-2 rounded-sm border ${isCurrent ? 'border-teal/40 bg-teal/5' : 'border-[#e5e5e0]'}`}
+                                  className={`flex items-start justify-between gap-3 px-3 py-2 rounded-sm border ${isCurrent ? 'border-teal/40 bg-teal/5' : 'border-[#e3ddd2]'}`}
                                 >
                                   <div className="min-w-0">
                                     <p className="font-montserrat text-xs font-semibold text-ink">

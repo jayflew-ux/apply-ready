@@ -39,7 +39,7 @@ export default function Landing() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-linen">
+    <div className="min-h-screen">
       {/* Nav */}
       <header className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
         <span className="font-montserrat font-bold text-teal tracking-widest text-sm uppercase">Dream Job Ready</span>
@@ -64,9 +64,9 @@ export default function Landing() {
       {/* Hero */}
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-24 text-center">
         <p className="font-montserrat text-xs uppercase tracking-widest text-copper mb-6">Your entire job search in one place</p>
-        <h1 className="font-montserrat font-bold text-4xl sm:text-5xl md:text-6xl text-teal-deeper leading-tight mb-6">
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-teal-deeper leading-[1.15] mb-6 tracking-tight">
           From your resume<br />
-          <span className="text-teal">to your first step through the door.</span>
+          <span className="italic text-teal">to your first step through the door.</span>
         </h1>
         <p className="font-lora text-lg text-ink/70 max-w-2xl mx-auto mb-10 leading-relaxed">
           Dream Job Ready walks with you through every stage of the job search — discovering what fits your background, tailoring your materials, preparing you to interview, and helping you reflect on what happened after. Built on what you have actually done, not what sounds good.
@@ -90,18 +90,18 @@ export default function Landing() {
       {/* Journey steps */}
       <section className="max-w-5xl mx-auto px-6 py-20">
         <p className="font-montserrat text-xs uppercase tracking-widest text-copper text-center mb-4">The full arc</p>
-        <h2 className="font-montserrat font-bold text-2xl sm:text-3xl text-teal-deeper text-center mb-14">
+        <h2 className="font-display text-3xl sm:text-4xl text-teal-deeper text-center mb-14 tracking-tight">
           Stretch. Prepare. Apply. Reflect.
         </h2>
         <div className="flex flex-col gap-10">
           {JOURNEY.map((j, i) => (
             <div key={j.step} className={`flex flex-col sm:flex-row gap-6 sm:gap-10 items-start ${i % 2 !== 0 ? 'sm:flex-row-reverse' : ''}`}>
-              <div className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-full border-2 border-teal/20 bg-teal/5">
+              <div className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-full border border-teal/20 surface shadow-sm">
                 <span className="font-montserrat font-bold text-sm text-teal">{j.step}</span>
               </div>
-              <div className="flex-1 flex flex-col gap-2 pb-10 border-b border-[#e5e5e0] sm:border-0">
+              <div className="flex-1 flex flex-col gap-2 pb-10 border-b border-[#e3ddd2] sm:border-0">
                 <span className="font-montserrat text-xs uppercase tracking-widest text-copper">{j.label}</span>
-                <h3 className="font-montserrat font-bold text-lg text-teal-deeper">{j.heading}</h3>
+                <h3 className="font-display text-xl text-teal-deeper">{j.heading}</h3>
                 <p className="font-lora text-sm text-ink/70 leading-relaxed max-w-xl">{j.body}</p>
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function Landing() {
       {/* Bring your own job */}
       <section className="max-w-3xl mx-auto px-6 py-20 text-center">
         <p className="font-montserrat text-xs uppercase tracking-widest text-copper mb-6">Bring any job posting</p>
-        <h2 className="font-montserrat font-bold text-2xl sm:text-3xl text-teal-deeper mb-6">
+        <h2 className="font-display text-3xl sm:text-4xl text-teal-deeper mb-6 tracking-tight">
           Found something you want to go after?
         </h2>
         <p className="font-lora text-base text-ink/70 leading-relaxed max-w-2xl mx-auto">
@@ -133,7 +133,7 @@ export default function Landing() {
       {/* Ground rules */}
       <section className="max-w-3xl mx-auto px-6 py-20 text-center">
         <p className="font-montserrat text-xs uppercase tracking-widest text-copper mb-6">How we work</p>
-        <h2 className="font-montserrat font-bold text-2xl sm:text-3xl text-teal-deeper mb-6">
+        <h2 className="font-display text-3xl sm:text-4xl text-teal-deeper mb-6 tracking-tight">
           Your resume is the source of truth.
         </h2>
         <p className="font-lora text-base text-ink/70 leading-relaxed max-w-2xl mx-auto">
@@ -147,14 +147,14 @@ export default function Landing() {
       {/* CTA */}
       <section className="bg-teal-deeper py-20">
         <div className="max-w-2xl mx-auto px-6 text-center">
-          <h2 className="font-montserrat font-bold text-2xl sm:text-3xl text-linen mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl text-linen mb-4 tracking-tight">
             Ready to stretch toward your next role?
           </h2>
           <p className="font-lora text-linen/70 mb-8 leading-relaxed">
             Upload your resume, see what fits your background, and let Dream Job Ready walk with you through every step from there.
           </p>
           <Link to="/auth?mode=signup">
-            <Button variant="outline" size="lg" className="border-linen text-linen hover:bg-linen hover:text-teal-deeper">
+            <Button variant="outline" size="lg" className="border-linen text-linen hover:surface hover:text-teal-deeper">
               Get started free
             </Button>
           </Link>
@@ -162,7 +162,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between border-t border-[#e5e5e0]">
+      <footer className="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between border-t border-[#e3ddd2]">
         <span className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase">Dream Job Ready</span>
         <span className="font-lora text-xs text-ink/40">&copy; {new Date().getFullYear()} Dream Job Ready</span>
       </footer>

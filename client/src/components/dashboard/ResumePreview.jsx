@@ -102,7 +102,7 @@ export default function ResumePreview({ text }) {
   flushBullets();
 
   return (
-    <div className="bg-white rounded-sm border border-[#e5e5e0] shadow-sm p-8 text-left">
+    <div className="bg-white rounded-sm border border-[#e3ddd2] shadow-sm p-8 text-left">
       {elements}
     </div>
   );

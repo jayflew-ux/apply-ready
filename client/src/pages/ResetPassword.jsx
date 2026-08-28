@@ -35,7 +35,7 @@ export default function ResetPassword() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-linen flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="max-w-sm w-full text-center">
           <span className="font-montserrat text-xs uppercase tracking-widest text-copper block mb-6">Dream Job Ready</span>
           <h1 className="font-montserrat font-bold text-2xl text-teal-deeper mb-3">Password updated</h1>
@@ -46,7 +46,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-linen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-sm w-full">
         <Link to="/" className="block text-center font-montserrat text-xs uppercase tracking-widest text-copper mb-8">Dream Job Ready</Link>
         <h1 className="font-montserrat font-bold text-2xl text-teal-deeper mb-1 text-center">Set a new password</h1>

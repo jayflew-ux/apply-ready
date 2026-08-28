@@ -30,7 +30,7 @@ function scoreColor(score) {
 
 function ListingCard({ listing, onPrep, prepping }) {
   return (
-    <div className="bg-white border border-[#e5e5e0] rounded-sm p-4 flex flex-col gap-3 hover:border-teal/30 transition-colors">
+    <div className="surface border border-[#e3ddd2] rounded-sm p-4 flex flex-col gap-3 hover:border-teal/30 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-montserrat font-bold text-sm text-teal-deeper leading-snug">{listing.title}</h3>
@@ -65,7 +65,7 @@ function ListingCard({ listing, onPrep, prepping }) {
         <p className="font-lora text-xs text-teal italic leading-relaxed">{listing.match_reason}</p>
       )}
 
-      <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#e5e5e0]">
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#e3ddd2]">
         {listing.url ? (
           <a
             href={listing.url}
@@ -230,7 +230,7 @@ export default function DiscoverTab({ hasResume, onJobAdded, onAddOwnJob }) {
         </p>
 
         {loadingLst && !listings && (
-          <div className="flex flex-col items-center gap-3 py-12 bg-white border border-[#e5e5e0] rounded-sm">
+          <div className="flex flex-col items-center gap-3 py-12 surface border border-[#e3ddd2] rounded-sm">
             <Spinner size="lg" />
             <p className="font-lora text-sm text-ink/60">Searching live job boards for postings that fit you...</p>
             <p className="font-lora text-xs text-ink/40">This can take up to a minute.</p>
@@ -266,7 +266,7 @@ export default function DiscoverTab({ hasResume, onJobAdded, onAddOwnJob }) {
         )}
 
         {listings && !loadingLst && !(listings.listings?.length > 0) && !listError && (
-          <p className="font-lora text-sm text-ink/40 text-center py-6 bg-white border border-[#e5e5e0] rounded-sm">
+          <p className="font-lora text-sm text-ink/40 text-center py-6 surface border border-[#e3ddd2] rounded-sm">
             No solid current listings surfaced this pass. Try again later, broaden your target roles and regions in Profile,
             or add a posting you already have.
           </p>
@@ -275,7 +275,7 @@ export default function DiscoverTab({ hasResume, onJobAdded, onAddOwnJob }) {
 
       {/* Role suggestions — secondary context */}
       {(data || loading || error) && (
-      <div className="border-t border-[#e5e5e0] pt-8">
+      <div className="border-t border-[#e3ddd2] pt-8">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 className="font-montserrat font-bold text-base text-teal-deeper">Roles that fit your background</h2>
@@ -322,7 +322,7 @@ export default function DiscoverTab({ hasResume, onJobAdded, onAddOwnJob }) {
           {(data?.roles || []).map((role, i) => (
             <div
               key={i}
-              className="bg-white border border-[#e5e5e0] rounded-sm p-4 flex flex-col gap-3 hover:border-teal/30 transition-colors"
+              className="surface border border-[#e3ddd2] rounded-sm p-4 flex flex-col gap-3 hover:border-teal/30 transition-colors"
             >
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-montserrat font-bold text-sm text-teal-deeper leading-snug">{role.title}</h3>
@@ -333,7 +333,7 @@ export default function DiscoverTab({ hasResume, onJobAdded, onAddOwnJob }) {
 
               <p className="font-lora text-xs text-ink/60 leading-relaxed flex-1">{role.reason}</p>
 
-              <div className="flex items-center gap-2 pt-1 border-t border-[#e5e5e0]">
+              <div className="flex items-center gap-2 pt-1 border-t border-[#e3ddd2]">
                 <a
                   href={searchURL('linkedin', role.title)}
                   target="_blank"

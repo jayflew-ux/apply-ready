@@ -82,9 +82,9 @@ export default function Dashboard() {
   const interestedCount = jobs.filter(j => j.status === 'interested').length;
 
   return (
-    <div className="min-h-screen bg-linen">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-linen/95 backdrop-blur-sm border-b border-[#e5e5e0]">
+      <header className="sticky top-0 z-10 bg-cream/70 backdrop-blur-md border-b border-[#e3ddd2]">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <Link to="/" className="font-montserrat font-bold text-teal text-xs tracking-widest uppercase flex-shrink-0">
             Dream Job Ready
@@ -133,7 +133,7 @@ export default function Dashboard() {
         )}
 
         {/* Tab bar */}
-        <div className="flex items-end gap-0 border-b border-[#e5e5e0] mt-6">
+        <div className="flex items-end gap-0 border-b border-[#e3ddd2] mt-6">
           {TABS.map(t => {
             const count =
               t === 'Interested' ? interestedCount :

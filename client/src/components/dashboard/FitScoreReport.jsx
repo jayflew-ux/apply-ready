@@ -8,7 +8,7 @@ const VERDICT_CONFIG = {
 };
 
 function ScoreRing({ score }) {
-  const color = score >= 70 ? '#1e8b8b' : score >= 45 ? '#c87b33' : '#c87b33';
+  const color = score >= 70 ? '#083a4f' : score >= 45 ? '#a58d66' : '#b0392e';
   const r = 28;
   const circ = 2 * Math.PI * r;
   const dash = (score / 100) * circ;
@@ -16,7 +16,7 @@ function ScoreRing({ score }) {
   return (
     <div className="relative flex items-center justify-center w-20 h-20">
       <svg width="80" height="80" viewBox="0 0 80 80" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="40" cy="40" r={r} fill="none" stroke="#e5e5e0" strokeWidth="6" />
+        <circle cx="40" cy="40" r={r} fill="none" stroke="#e3ddd2" strokeWidth="6" />
         <circle
           cx="40" cy="40" r={r}
           fill="none"
@@ -98,7 +98,7 @@ export default function FitScoreReport({ report, jobTitle, company, updatedScore
 
       {/* ATS keyword coverage (present on newer reports) */}
       {(report.keyword_coverage?.covered?.length > 0 || report.keyword_coverage?.missing?.length > 0) && (
-        <div className="border-t border-[#e5e5e0] pt-4">
+        <div className="border-t border-[#e3ddd2] pt-4">
           <p className="font-montserrat text-xs uppercase tracking-widest text-ink/40 mb-2.5">ATS keyword coverage</p>
           <div className="flex flex-wrap gap-1.5">
             {(report.keyword_coverage.covered || []).map((k, i) => (
@@ -107,7 +107,7 @@ export default function FitScoreReport({ report, jobTitle, company, updatedScore
               </span>
             ))}
             {(report.keyword_coverage.missing || []).map((k, i) => (
-              <span key={`m-${i}`} className="px-2.5 py-1 bg-white border border-copper/40 border-dashed rounded-sm font-montserrat text-[11px] font-semibold text-copper">
+              <span key={`m-${i}`} className="px-2.5 py-1 bg-cream/60 border border-copper/50 border-dashed rounded-sm font-montserrat text-[11px] font-semibold text-copper">
                 {k}
               </span>
             ))}
@@ -122,7 +122,7 @@ export default function FitScoreReport({ report, jobTitle, company, updatedScore
 
       {/* Verdict reason */}
       {report.verdict_reason && (
-        <div className="border-t border-[#e5e5e0] pt-4">
+        <div className="border-t border-[#e3ddd2] pt-4">
           <p className="font-montserrat text-xs uppercase tracking-widest text-ink/40 mb-1.5">Recruiter read</p>
           <p className="font-lora text-sm text-ink/80 italic leading-relaxed">{report.verdict_reason}</p>
         </div>
