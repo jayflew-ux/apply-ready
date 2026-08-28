@@ -133,7 +133,7 @@ router.get('/:userJobId/progress', async (req, res, next) => {
     // never breaks on a schema that is one migration behind.
     let { data, error } = await req.db
       .from('user_jobs')
-      .select(`${CORE}, resume_revisions_used`)
+      .select(`${CORE}, resume_revisions_used, resume_versions`)
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id)
       .single();
@@ -164,6 +164,7 @@ router.get('/:userJobId/progress', async (req, res, next) => {
       tailoredResumeText: data.tailored_resume_text || '',
       tailoredResumeStyle: data.tailored_resume_style || 'classic',
       resumeRevisionsUsed: data.resume_revisions_used || 0,
+      resumeVersions: Array.isArray(data.resume_versions) ? data.resume_versions : [],
       coverLetterText: data.cover_letter_text || '',
       interviewPrep: data.interview_prep || null,
       postInterviewDebrief: data.post_interview_debrief || null,

@@ -95,6 +95,7 @@ export const api = {
     rescore:         (id, body)   => api.post(`/ai/rescore/${id}`, body),
     tailorResume:    (id, body)   => api.post(`/ai/tailor-resume/${id}`, body),
     reviseResume:    (id, body)   => api.post(`/ai/revise-resume/${id}`, body),
+    restoreVersion:  (id, index)  => api.post(`/ai/restore-resume-version/${id}`, { index }),
     coverLetter:     (id, body)   => api.post(`/ai/cover-letter/${id}`, body),
     interviewPrep:   (id, body)   => api.post(`/ai/interview-prep/${id}`, body || {}),
     debrief:         (id, body)   => api.post(`/ai/debrief/${id}`, body),

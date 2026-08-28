@@ -32,7 +32,10 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
   const [feedback, setFeedback]    = useState('');
   const [revising, setRevising]    = useState(false);
   const [revisionsUsed, setRevUsed] = useState(0);
-  const [revisionsLimit, setRevLimit] = useState(2);
+  const [revisionsLimit, setRevLimit] = useState(5);
+  const [versions, setVersions]    = useState([]);
+  const [restoringVer, setRestoringVer] = useState(null);
+  const [showVersions, setShowVersions] = useState(false);
   const [feedbackOpen, setFbOpen]  = useState(false);
   const [reviseNote, setReviseNote] = useState('');
   const [docStyle, setDocStyle]    = useState('classic');
@@ -55,6 +58,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
         if (p.coverLetterText) setLetterText(p.coverLetterText);
         if (p.resumeRevisionsUsed != null) setRevUsed(p.resumeRevisionsUsed);
         if (p.tailoredResumeStyle) setDocStyle(p.tailoredResumeStyle);
+        if (Array.isArray(p.resumeVersions)) setVersions(p.resumeVersions);
 
         if (Array.isArray(p.answers) && p.answers.length) {
           // Saved answers are {question, answer}; rebuild the keyed form state
@@ -134,7 +138,8 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
     try {
       const data = await api.ai.tailorResume(userJobId, { answers: answersArr });
       setResumeText(data.tailored_resume_text);
-      setRevUsed(0);          // a fresh build restores both revisions
+      setVersions(data.versions || []);
+      setRevUsed(0);          // a fresh build restores the full set of revisions
       setFbOpen(false);
       setFeedback('');
       setReviseNote('');
@@ -176,6 +181,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
     try {
       const data = await api.ai.reviseResume(userJobId, { feedback: feedback.trim() });
       setResumeText(data.tailored_resume_text);
+      if (data.versions) setVersions(data.versions);
       setRevUsed(data.revisions_used);
       setRevLimit(data.revisions_limit);
       setFeedback('');
@@ -186,6 +192,22 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
       if (e.data?.revisions_used != null) setRevUsed(e.data.revisions_used);
     } finally {
       setRevising(false);
+    }
+  }
+
+  async function restoreVersion(index) {
+    setRestoringVer(index);
+    setError('');
+    try {
+      const data = await api.ai.restoreVersion(userJobId, index);
+      setResumeText(data.tailored_resume_text);
+      if (data.versions) setVersions(data.versions);
+      setReviseNote(`Switched back to ${data.restored_label}.`);
+      setShowVersions(false);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRestoringVer(null);
     }
   }
 
@@ -400,21 +422,79 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                 )}
 
                 {!feedbackOpen ? (
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <p className="font-lora text-sm text-ink/70">
-                      {revisionsUsed >= revisionsLimit
-                        ? 'You have used both revisions for this job. Regenerate the resume above to start over with a fresh pair.'
-                        : 'Missing something, or want different emphasis? Tell the AI and it will rewrite it.'}
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={revisionsUsed >= revisionsLimit}
-                      onClick={() => { setFbOpen(true); setReviseNote(''); }}
-                    >
-                      Request changes
-                      {revisionsUsed < revisionsLimit && ` (${revisionsLimit - revisionsUsed} left)`}
-                    </Button>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <p className="font-lora text-sm text-ink/70">
+                        {revisionsUsed >= revisionsLimit
+                          ? 'You have used all your revisions for this job. You can still switch back to any earlier version below.'
+                          : 'Missing something, or want different emphasis? Tell the AI and it will rewrite it.'}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={revisionsUsed >= revisionsLimit}
+                        onClick={() => { setFbOpen(true); setReviseNote(''); }}
+                      >
+                        Request changes
+                        {revisionsUsed < revisionsLimit && ` (${revisionsLimit - revisionsUsed} left)`}
+                      </Button>
+                    </div>
+
+                    {versions.length > 1 && (
+                      <div className="pt-3 border-t border-[#e5e5e0]">
+                        <button
+                          onClick={() => setShowVersions(v => !v)}
+                          className="font-montserrat text-xs font-semibold text-teal hover:text-teal-deeper transition-colors"
+                        >
+                          {showVersions ? 'Hide' : 'Show'} earlier versions ({versions.length})
+                        </button>
+
+                        {showVersions && (
+                          <div className="mt-3 flex flex-col gap-2">
+                            {versions.map((v, i) => {
+                              const isCurrent = v.text === resumeText;
+                              return (
+                                <div
+                                  key={i}
+                                  className={`flex items-start justify-between gap-3 px-3 py-2 rounded-sm border ${isCurrent ? 'border-teal/40 bg-teal/5' : 'border-[#e5e5e0]'}`}
+                                >
+                                  <div className="min-w-0">
+                                    <p className="font-montserrat text-xs font-semibold text-ink">
+                                      {v.label || `Version ${i + 1}`}
+                                      {isCurrent && <span className="ml-2 font-lora font-normal text-teal">in use</span>}
+                                    </p>
+                                    {v.feedback && (
+                                      <p className="font-lora text-xs text-ink/50 mt-0.5 leading-relaxed">
+                                        You asked: "{v.feedback.length > 110 ? v.feedback.slice(0, 110) + '...' : v.feedback}"
+                                      </p>
+                                    )}
+                                    {!v.feedback && (
+                                      <p className="font-lora text-xs text-ink/40 mt-0.5">First tailored version</p>
+                                    )}
+                                    <p className="font-lora text-[10px] text-ink/30 mt-0.5">
+                                      {(v.text || '').split(/\s+/).filter(Boolean).length} words
+                                    </p>
+                                  </div>
+                                  {!isCurrent && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      loading={restoringVer === i}
+                                      onClick={() => restoreVersion(i)}
+                                    >
+                                      Use this one
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            <p className="font-lora text-xs text-ink/40">
+                              Switching back to an earlier version does not use up a revision.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">

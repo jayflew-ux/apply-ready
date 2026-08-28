@@ -183,11 +183,18 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
       score_improvement_answers: answers,
     };
 
+    const firstVersion = [{
+      text: tailored,
+      label: 'Original',
+      feedback: '',
+      created_at: new Date().toISOString(),
+    }];
+
     // resume_revisions_used arrives in a later migration. Try to reset it, but
     // never let its absence stop the resume itself from being saved.
     let { error: saveErr } = await req.db
       .from('user_jobs')
-      .update({ ...savePayload, resume_revisions_used: 0 })
+      .update({ ...savePayload, resume_revisions_used: 0, resume_versions: firstVersion })
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id);
 
@@ -215,6 +222,9 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
       tailored_resume_text: tailored,
       builds_used: isRegeneration ? buildsUsed : buildsUsed + 1,
       builds_limit: (!BILLING_LIVE || isSubscriber) ? null : FREE_RESUME_BUILDS,
+      versions: firstVersion,
+      revisions_used: 0,
+      revisions_limit: MAX_RESUME_REVISIONS,
     });
   } catch (err) {
     next(err);
@@ -222,9 +232,17 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
 });
 
 // Revise a tailored resume from the candidate's own feedback.
-// Capped per job so a misunderstanding has a fix without becoming a
-// free-running generation loop.
-const MAX_RESUME_REVISIONS = 2;
+// Every version is kept so a user can go back to one they preferred, and
+// revisions are capped per job so this cannot become an endless loop.
+const MAX_RESUME_REVISIONS = 5;
+
+// Trims the stored history so a runaway job cannot bloat the row.
+const MAX_STORED_VERSIONS = MAX_RESUME_REVISIONS + 1; // original + revisions
+
+function appendVersion(existing, entry) {
+  const list = Array.isArray(existing) ? existing : [];
+  return [...list, entry].slice(-MAX_STORED_VERSIONS);
+}
 
 router.post('/revise-resume/:userJobId', async (req, res, next) => {
   try {
@@ -243,7 +261,7 @@ router.post('/revise-resume/:userJobId', async (req, res, next) => {
     const used = userJob.resume_revisions_used || 0; // 0 when the column is not migrated yet
     if (used >= MAX_RESUME_REVISIONS) {
       return res.status(403).json({
-        error: `You have used both revisions for this job. You can still edit the text yourself after downloading, or start this job fresh to reset.`,
+        error: `You have used all ${MAX_RESUME_REVISIONS} revisions for this job. You can still switch back to any earlier version, or rebuild the resume to start fresh.`,
         revisions_used: used,
         revisions_limit: MAX_RESUME_REVISIONS,
       });
@@ -256,15 +274,37 @@ router.post('/revise-resume/:userJobId', async (req, res, next) => {
       feedback,
     );
 
+    // Seed history with the version being replaced, so the current text is
+    // never lost even for jobs created before versioning existed.
+    let history = Array.isArray(userJob.resume_versions) ? userJob.resume_versions : [];
+    if (history.length === 0) {
+      history = [{
+        text: userJob.tailored_resume_text,
+        label: 'Original',
+        feedback: '',
+        created_at: new Date().toISOString(),
+      }];
+    }
+    history = appendVersion(history, {
+      text: revised,
+      label: `Revision ${used + 1}`,
+      feedback,
+      created_at: new Date().toISOString(),
+    });
+
     let { error: revErr } = await req.db
       .from('user_jobs')
-      .update({ tailored_resume_text: revised, resume_revisions_used: used + 1 })
+      .update({
+        tailored_resume_text: revised,
+        resume_revisions_used: used + 1,
+        resume_versions: history,
+      })
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id);
 
     if (revErr) {
-      // Without the revisions column we cannot count revisions, but the
-      // revised resume must still be saved.
+      // Fall back if the versioning columns are not migrated yet; the revised
+      // resume itself must still be saved.
       ({ error: revErr } = await req.db
         .from('user_jobs')
         .update({ tailored_resume_text: revised })
@@ -280,6 +320,50 @@ router.post('/revise-resume/:userJobId', async (req, res, next) => {
     res.json({
       tailored_resume_text: revised,
       revisions_used: used + 1,
+      revisions_limit: MAX_RESUME_REVISIONS,
+      versions: history,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Switch the active resume back to an earlier version. This does not consume
+// a revision — going back to something you already had should never cost you.
+router.post('/restore-resume-version/:userJobId', async (req, res, next) => {
+  try {
+    const { userJob } = await getContext(req);
+    if (!userJob) return res.status(404).json({ error: 'Job not found' });
+
+    const versions = Array.isArray(userJob.resume_versions) ? userJob.resume_versions : [];
+    if (!versions.length) {
+      return res.status(400).json({ error: 'No earlier versions are saved for this job yet.' });
+    }
+
+    const index = Number(req.body?.index);
+    if (!Number.isInteger(index) || index < 0 || index >= versions.length) {
+      return res.status(400).json({ error: 'That version does not exist.' });
+    }
+
+    const chosen = versions[index];
+    if (!chosen?.text) return res.status(400).json({ error: 'That version has no saved text.' });
+
+    const { error } = await req.db
+      .from('user_jobs')
+      .update({ tailored_resume_text: chosen.text })
+      .eq('id', req.params.userJobId)
+      .eq('user_id', req.user.id);
+
+    if (error) {
+      console.error('failed to restore resume version', error.message);
+      throw new Error('That version could not be restored. Please try again.');
+    }
+
+    res.json({
+      tailored_resume_text: chosen.text,
+      restored_label: chosen.label || `Version ${index + 1}`,
+      versions,
+      revisions_used: userJob.resume_revisions_used || 0,
       revisions_limit: MAX_RESUME_REVISIONS,
     });
   } catch (err) {
