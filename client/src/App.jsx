@@ -30,7 +30,12 @@ function AuthLayout({ children }) {
 export default function App() {
   return (
     <AuthProvider>
+      {/* The Dream Design Studio sky: fixed behind every route. */}
+      <div className="atmosphere" aria-hidden="true" />
+      <div className="atmosphere-grain" aria-hidden="true" />
+
       <BrowserRouter>
+        <div className="app-content">
         <Routes>
           <Route path="/"           element={<Landing />} />
           <Route path="/auth"       element={<Auth />} />
@@ -41,6 +46,7 @@ export default function App() {
           <Route path="/admin"      element={<RequireAuth><Admin /></RequireAuth>} />
           <Route path="*"           element={<Navigate to="/" replace />} />
         </Routes>
+        </div>
       </BrowserRouter>
     </AuthProvider>
   );
