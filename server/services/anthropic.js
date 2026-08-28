@@ -54,14 +54,71 @@ const SCORING_RUBRIC = `SCORING SCALE (use this exact scale for every 0-100 scor
 
 Anchor on the posting's stated MUST-HAVE requirements, not on how impressive the resume is in general. A strong candidate applying to the wrong role scores low, and that is correct. Do not cluster scores in the 70s to be encouraging; use the full range honestly.`;
 
-function parseJSON(text) {
-  try {
-    const match = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
-    if (match) return JSON.parse(match[1]);
-    return JSON.parse(text);
-  } catch {
-    throw new Error('The AI returned an unexpected response. This usually means the job description is empty or unreadable. Please paste the job text manually instead of using a screenshot.');
+// Pulls the first COMPLETE JSON object out of a model response by scanning
+// for balanced braces while respecting string literals. A greedy
+// first-brace-to-last-brace regex breaks whenever the model adds a trailing
+// note or an extra brace after the object; this does not.
+function extractJSONObject(text) {
+  if (!text) return null;
+
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const sources = fenced ? [fenced[1], text] : [text];
+
+  for (const source of sources) {
+    const start = source.indexOf('{');
+    if (start === -1) continue;
+
+    let depth = 0, inString = false, escaped = false;
+    for (let i = start; i < source.length; i++) {
+      const ch = source[i];
+      if (escaped) { escaped = false; continue; }
+      if (ch === '\\') { escaped = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (ch === '{') depth++;
+      else if (ch === '}' && --depth === 0) return source.slice(start, i + 1);
+    }
   }
+  return null;
+}
+
+const CONTROL_CHARS = /[\u0000-\u001f]/g;
+const CONTROL_MAP = { '\n': '\\n', '\r': '\\r', '\t': '\\t' };
+
+function parseJSON(text, context = {}) {
+  const candidates = [];
+  const obj = extractJSONObject(text);
+  if (obj) candidates.push(obj);
+  if (text) candidates.push(text.trim());
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // Some responses contain raw newlines inside string values, which strict
+      // JSON.parse rejects. Escape them and try once more.
+      try {
+        return JSON.parse(candidate.replace(CONTROL_CHARS, c => CONTROL_MAP[c] ?? ''));
+      } catch { /* try next candidate */ }
+    }
+  }
+
+  // Log the real response so these are diagnosable from server logs rather
+  // than only surfacing to the user as a vague message.
+  console.error('parseJSON failed', {
+    fn: context.fn || 'unknown',
+    stop_reason: context.stopReason,
+    output_tokens: context.outputTokens,
+    length: text ? text.length : 0,
+    head: (text || '').slice(0, 400),
+    tail: (text || '').slice(-200),
+  });
+
+  throw new Error(
+    context.stopReason === 'max_tokens'
+      ? 'The response was cut off before it finished, which usually means the job posting is very long. Try trimming it to just the role description and requirements, then run it again.'
+      : 'We could not read the result for this job. Please try again. If it keeps happening, paste just the role description and requirements rather than the whole page.',
+  );
 }
 
 async function extractTextFromImage(imageBuffer, mimeType) {
@@ -131,7 +188,11 @@ For keyword_coverage, pick the 8-14 terms an applicant tracking system or screen
     ],
   });
 
-  return parseJSON(extractText(response));
+  return parseJSON(extractText(response), {
+    fn: 'fitScore',
+    stopReason: response.stop_reason,
+    outputTokens: response.usage?.output_tokens,
+  });
 }
 
 async function scoreImprovementQuestions(resumeText, jobDescription, fitReport) {
@@ -168,7 +229,11 @@ Limit to 3–5 questions maximum.`,
     ],
   });
 
-  return parseJSON(extractText(response));
+  return parseJSON(extractText(response), {
+    fn: 'scoreImprovementQuestions',
+    stopReason: response.stop_reason,
+    outputTokens: response.usage?.output_tokens,
+  });
 }
 
 async function tailorResume(resumeText, jobDescription, answers = [], style = 'classic') {
@@ -300,7 +365,11 @@ Provide 4–5 behavioral questions, 3–4 technical questions, 4 questions to as
     ],
   });
 
-  return parseJSON(extractText(response));
+  return parseJSON(extractText(response), {
+    fn: 'interviewPrep',
+    stopReason: response.stop_reason,
+    outputTokens: response.usage?.output_tokens,
+  });
 }
 
 async function postInterviewDebrief(resumeText, jobDescription, interviewNotes) {
@@ -330,7 +399,11 @@ async function postInterviewDebrief(resumeText, jobDescription, interviewNotes) 
     ],
   });
 
-  return parseJSON(extractText(response));
+  return parseJSON(extractText(response), {
+    fn: 'postInterviewDebrief',
+    stopReason: response.stop_reason,
+    outputTokens: response.usage?.output_tokens,
+  });
 }
 
 async function rescoreWithAnswers(resumeText, jobDescription, originalReport, answers) {
@@ -371,7 +444,11 @@ Return ONLY valid JSON:
     }],
   });
 
-  return parseJSON(extractText(response));
+  return parseJSON(extractText(response), {
+    fn: 'rescoreWithAnswers',
+    stopReason: response.stop_reason,
+    outputTokens: response.usage?.output_tokens,
+  });
 }
 
 async function chat(messages, context = {}) {
@@ -478,7 +555,11 @@ Return 5-10 listings ordered by match_score descending.`,
     ],
   });
 
-  return parseJSON(extractText(response));
+  return parseJSON(extractText(response), {
+    fn: 'findListings',
+    stopReason: response.stop_reason,
+    outputTokens: response.usage?.output_tokens,
+  });
 }
 
 async function suggestRoles(resumeText) {
@@ -508,7 +589,11 @@ Return 2–3 categories and 8–12 specific role titles. Be realistic — match 
     ],
   });
 
-  return parseJSON(extractText(response));
+  return parseJSON(extractText(response), {
+    fn: 'suggestRoles',
+    stopReason: response.stop_reason,
+    outputTokens: response.usage?.output_tokens,
+  });
 }
 
 module.exports = {
