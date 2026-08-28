@@ -293,7 +293,11 @@ router.post('/debrief/:userJobId', async (req, res, next) => {
 
 // Live job listings via web search, scored against the resume.
 // Cached per user for 6 hours to keep search costs sane; force=true refreshes.
-const LISTINGS_CACHE_HOURS = 6;
+// Each fresh sweep runs several web searches and feeds the results through
+// Opus, so it is the most expensive operation in the app. Job boards do not
+// turn over fast enough to justify re-searching more often than daily; users
+// who want fresher results can force one with the "Search again" button.
+const LISTINGS_CACHE_HOURS = 24;
 
 router.post('/find-listings', async (req, res, next) => {
   try {
