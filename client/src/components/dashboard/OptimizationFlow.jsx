@@ -11,7 +11,7 @@ import Button from '../ui/Button';
 import Spinner from '../ui/Spinner';
 import { Textarea } from '../ui/Input';
 
-const STEPS = ['Fit Score', 'Questions', 'Updated Score', 'Resume', 'Cover Letter', 'Apply'];
+const STEPS = ['Fit Score', 'Questions', 'Resume', 'Cover Letter', 'Apply'];
 
 export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreReport, onApplied, onClose }) {
   const [step, setStep]            = useState(0);
@@ -64,10 +64,9 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
         }
 
         // Resume at the furthest completed point.
-        if (p.status === 'applied')          setStep(5);
-        else if (p.coverLetterText)          setStep(4);
-        else if (p.tailoredResumeText)       setStep(3);
-        else if (p.answers?.length)          setStep(2);
+        if (p.status === 'applied')          setStep(4);
+        else if (p.coverLetterText)          setStep(3);
+        else if (p.tailoredResumeText)       setStep(2);
         else                                 setStep(0);
       })
       .catch(() => { /* fall through to a fresh run */ })
@@ -102,14 +101,25 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
   }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function submitAnswers() {
+    const answersArr = (questions || []).map(q => ({ question: q.question, answer: answers[q.id] || '' }));
+    const hasNewInfo = answersArr.some(a => a.answer.trim().length > 0);
+
+    // Nothing was written, so there is nothing to re-evaluate. Re-running the
+    // model here would just burn a call and produce a meaningless "update".
+    if (!hasNewInfo) {
+      setRResult(null);
+      setUpdated(null);
+      setStep(0);
+      return;
+    }
+
     setRescoring(true);
     setError('');
-    const answersArr = (questions || []).map(q => ({ question: q.question, answer: answers[q.id] || '' }));
     try {
       const result = await api.ai.rescore(userJobId, { answers: answersArr });
       setUpdated(result.overall_score);
       setRResult(result);
-      setStep(2);
+      setStep(0);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -131,7 +141,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
     } catch (e) {
       if (e.data?.upgrade_required) {
         setUpgrade(true);
-        setStep(2); // back to the score step so the flow isn't stranded
+        setStep(0); // back to the score screen so the flow isn't stranded
       } else {
         setError(e.message);
       }
@@ -150,7 +160,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
     } catch (e) {
       if (e.data?.upgrade_required) {
         setUpgrade(true);
-        setStep(3);
+        setStep(2);
       } else {
         setError(e.message);
       }
@@ -194,7 +204,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
   }
 
   // Steps the user can jump back to: anything already completed.
-  const furthestStep = letterText ? 5 : resumeText ? 4 : report ? 2 : 0;
+  const furthestStep = letterText ? 4 : resumeText ? 3 : report ? 1 : 0;
   const canVisit = i => i <= Math.max(step, furthestStep);
 
   return (
@@ -225,12 +235,12 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
         ))}
       </div>
 
-      {(resumeText || letterText) && step < 3 && (
+      {(resumeText || letterText) && step < 2 && (
         <div className="bg-teal/5 border border-teal/20 rounded-sm px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <p className="font-lora text-sm text-ink/70">
             You already have {[resumeText && 'a tailored resume', letterText && 'a cover letter'].filter(Boolean).join(' and ')} saved for this job.
           </p>
-          <Button size="sm" variant="outline" onClick={() => setStep(letterText ? 4 : 3)}>
+          <Button size="sm" variant="outline" onClick={() => setStep(letterText ? 3 : 2)}>
             Go to my documents
           </Button>
         </div>
@@ -238,7 +248,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
 
       {error && <p className="font-lora text-sm text-red-600 bg-red-50 px-4 py-3 rounded-sm">{error}</p>}
 
-      {/* STEP 0: Fit Score */}
+      {/* STEP 0: Fit Score — one score screen that updates in place */}
       {step === 0 && (
         <div className="flex flex-col gap-4">
           {loadingScore ? (
@@ -248,10 +258,70 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
             </div>
           ) : report ? (
             <>
-              <FitScoreReport report={report} jobTitle={job?.title} company={job?.company} />
-              <Button onClick={() => setStep(1)}>
-                Answer a few questions to strengthen this
-              </Button>
+              <FitScoreReport
+                report={report}
+                jobTitle={job?.title}
+                company={job?.company}
+                updatedScore={updatedScore}
+              />
+
+              {rescoreResult && (
+                <div className="bg-teal/5 border border-teal/20 rounded-sm px-4 py-3">
+                  <p className="font-montserrat text-[10px] uppercase tracking-widest text-teal mb-1.5">
+                    After your answers
+                  </p>
+                  <p className="font-lora text-sm text-ink/80 leading-relaxed">{rescoreResult.updated_why}</p>
+                  {rescoreResult.additional_strengths?.length > 0 && (
+                    <ul className="mt-2 flex flex-col gap-1">
+                      {rescoreResult.additional_strengths.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 font-lora text-sm text-teal">
+                          <span className="flex-shrink-0">+</span>{s}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {rescoreResult.still_missing?.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-teal/15">
+                      <p className="font-montserrat text-[10px] uppercase tracking-widest text-copper mb-1.5">Still unresolved</p>
+                      <ul className="flex flex-col gap-1">
+                        {rescoreResult.still_missing.map((s, i) => (
+                          <li key={i} className="flex items-start gap-2 font-lora text-sm text-ink/70">
+                            <span className="text-copper flex-shrink-0">–</span>{s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-2 pt-1">
+                {!rescoreResult ? (
+                  <>
+                    <Button onClick={() => setStep(1)}>
+                      Answer a few questions to strengthen this
+                    </Button>
+                    <button
+                      onClick={() => { setStep(2); if (!resumeText) generateResume(); }}
+                      className="font-lora text-xs text-ink/40 hover:text-ink/60 self-center"
+                    >
+                      Skip and tailor my resume now
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Button onClick={() => { setStep(2); if (!resumeText) generateResume(); }}>
+                      Tailor my resume for this role
+                    </Button>
+                    <button
+                      onClick={() => setStep(1)}
+                      className="font-lora text-xs text-ink/40 hover:text-ink/60 self-center"
+                    >
+                      Revisit my answers
+                    </button>
+                  </>
+                )}
+              </div>
             </>
           ) : null}
         </div>
@@ -263,7 +333,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
           <div>
             <h3 className="font-montserrat font-bold text-base text-teal-deeper mb-1">A few quick questions</h3>
             <p className="font-lora text-sm text-ink/60 leading-relaxed">
-              These help surface context your resume may not fully capture. Your answers go directly into your tailored materials and update your fit score.
+              These surface context your resume may not fully capture. Whatever you write feeds directly into your tailored resume and cover letter, and updates the score on the previous screen. Skip any that do not apply.
             </p>
           </div>
 
@@ -286,65 +356,15 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                 </div>
               ))}
               <Button onClick={submitAnswers} loading={rescoring}>
-                Update my score
+                Save answers and update my score
               </Button>
             </div>
           ) : null}
         </div>
       )}
 
-      {/* STEP 2: Updated Score */}
+      {/* STEP 2: Tailored Resume */}
       {step === 2 && (
-        <div className="flex flex-col gap-5">
-          <h3 className="font-montserrat font-bold text-base text-teal-deeper mb-1">Updated fit score</h3>
-
-          <FitScoreReport
-            report={report}
-            jobTitle={job?.title}
-            company={job?.company}
-            updatedScore={updatedScore}
-          />
-
-          {rescoreResult && (
-            <div className="bg-teal/5 border border-teal/20 rounded-sm px-4 py-3">
-              <p className="font-lora text-sm text-ink/80 leading-relaxed">{rescoreResult.updated_why}</p>
-              {rescoreResult.additional_strengths?.length > 0 && (
-                <ul className="mt-2 flex flex-col gap-1">
-                  {rescoreResult.additional_strengths.map((s, i) => (
-                    <li key={i} className="flex items-start gap-2 font-lora text-sm text-teal">
-                      <span className="flex-shrink-0">+</span>{s}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {rescoreResult.still_missing?.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-teal/15">
-                  <p className="font-montserrat text-[10px] uppercase tracking-widest text-copper mb-1.5">Still unresolved</p>
-                  <ul className="flex flex-col gap-1">
-                    {rescoreResult.still_missing.map((s, i) => (
-                      <li key={i} className="flex items-start gap-2 font-lora text-sm text-ink/70">
-                        <span className="text-copper flex-shrink-0">–</span>{s}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-col gap-2 pt-1">
-            <Button onClick={() => { setStep(3); generateResume(); }}>
-              Tailor my resume for this role
-            </Button>
-            <Button variant="ghost" onClick={onClose} className="text-ink/50">
-              Save and come back later
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3: Tailored Resume */}
-      {step === 3 && (
         <div className="flex flex-col gap-4">
           <h3 className="font-montserrat font-bold text-base text-teal-deeper">Tailored resume</h3>
 
@@ -437,7 +457,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                 >
                   <PrinterIcon className="w-4 h-4" /> Print / Save as PDF
                 </Button>
-                <Button size="sm" onClick={() => { setStep(4); generateLetter(); }}>
+                <Button size="sm" onClick={() => { setStep(3); if (!letterText) generateLetter(); }}>
                   Generate cover letter
                 </Button>
               </div>
@@ -446,8 +466,8 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
         </div>
       )}
 
-      {/* STEP 4: Cover Letter */}
-      {step === 4 && (
+      {/* STEP 3: Cover Letter */}
+      {step === 3 && (
         <div className="flex flex-col gap-4">
           <h3 className="font-montserrat font-bold text-base text-teal-deeper">Cover letter</h3>
 
@@ -481,7 +501,7 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
                 >
                   <PrinterIcon className="w-4 h-4" /> Print / Save as PDF
                 </Button>
-                <Button size="sm" onClick={() => setStep(5)}>
+                <Button size="sm" onClick={() => setStep(4)}>
                   Ready to apply
                 </Button>
               </div>
@@ -490,8 +510,8 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
         </div>
       )}
 
-      {/* STEP 5: Apply */}
-      {step === 5 && (
+      {/* STEP 4: Apply */}
+      {step === 4 && (
         <div className="flex flex-col gap-5">
           <div>
             <h3 className="font-montserrat font-bold text-base text-teal-deeper mb-1">Ready to submit</h3>
