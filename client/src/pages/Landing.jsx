@@ -93,13 +93,18 @@ export default function Landing() {
         <h2 className="font-display text-3xl sm:text-4xl text-teal-deeper text-center mb-14 tracking-tight">
           Stretch. Prepare. Apply. Reflect.
         </h2>
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-6">
           {JOURNEY.map((j, i) => (
-            <div key={j.step} className={`flex flex-col sm:flex-row gap-6 sm:gap-10 items-start ${i % 2 !== 0 ? 'sm:flex-row-reverse' : ''}`}>
-              <div className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-full border border-teal/20 surface shadow-sm">
-                <span className="font-montserrat font-bold text-sm text-teal">{j.step}</span>
+            <div
+              key={j.step}
+              className={`surface border border-[#e3ddd2] rounded-sm shadow-sm hover:shadow-md transition-shadow
+                          px-6 py-7 sm:px-9 sm:py-8 flex flex-col sm:flex-row gap-5 sm:gap-8 items-start
+                          ${i % 2 !== 0 ? 'sm:flex-row-reverse sm:text-right' : ''}`}
+            >
+              <div className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-full border border-teal/25 bg-teal/5">
+                <span className="font-display text-lg text-teal">{j.step}</span>
               </div>
-              <div className="flex-1 flex flex-col gap-2 pb-10 border-b border-[#e3ddd2] sm:border-0">
+              <div className={`flex-1 flex flex-col gap-2 ${i % 2 !== 0 ? 'sm:items-end' : ''}`}>
                 <span className="font-montserrat text-xs uppercase tracking-widest text-copper">{j.label}</span>
                 <h3 className="font-display text-xl text-teal-deeper">{j.heading}</h3>
                 <p className="font-lora text-sm text-ink/70 leading-relaxed max-w-xl">{j.body}</p>
@@ -134,7 +139,7 @@ export default function Landing() {
       <section className="max-w-3xl mx-auto px-6 py-20 text-center">
         <p className="font-montserrat text-xs uppercase tracking-widest text-copper mb-6">How we work</p>
         <h2 className="font-display text-3xl sm:text-4xl text-teal-deeper mb-6 tracking-tight">
-          Your resume is the source of truth.
+          Your resume is your story. No exaggeration.
         </h2>
         <p className="font-lora text-base text-ink/70 leading-relaxed max-w-2xl mx-auto">
           Dream Job Ready never invents a skill, title, metric, or outcome you have not documented. If a role requires something you do not have, the AI says so plainly and helps you decide what to do with that information. This is not a resume inflation machine. It is a preparation machine.
