@@ -128,6 +128,7 @@ export default function Dashboard() {
             hasJob={jobs.length > 0 || submitted.length > 0}
             hasScore={jobs.some(j => j.fitScore != null) || submitted.length > 0}
             onAddJob={() => setAddOpen(true)}
+            onSeeMatches={() => setTab('Discover')}
           />
         )}
 
@@ -161,7 +162,13 @@ export default function Dashboard() {
         </div>
 
         <div className="py-6">
-          {tab === 'Discover'   && <DiscoverTab hasResume={hasResume} onJobAdded={() => { loadData(); setTab('Interested'); }} />}
+          {tab === 'Discover'   && (
+            <DiscoverTab
+              hasResume={hasResume}
+              onJobAdded={() => { loadData(); setTab('Interested'); }}
+              onAddOwnJob={() => setAddOpen(true)}
+            />
+          )}
           {tab === 'Interested' && <InterestedTab jobs={jobs} loading={loading} onStatusChange={handleStatusChange} />}
           {tab === 'Submitted'  && <SubmittedTab  jobs={submitted} loading={loading} onJourneyUpdate={handleJourneyUpdate} />}
         </div>

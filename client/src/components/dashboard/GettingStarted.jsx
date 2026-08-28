@@ -22,7 +22,7 @@ function Step({ done, number, title, description, action }) {
   );
 }
 
-export default function GettingStarted({ hasResume, hasJob, hasScore, onAddJob }) {
+export default function GettingStarted({ hasResume, hasJob, hasScore, onAddJob, onSeeMatches }) {
   const steps = [
     {
       done: hasResume,
@@ -36,12 +36,17 @@ export default function GettingStarted({ hasResume, hasJob, hasScore, onAddJob }
     },
     {
       done: hasJob,
-      title: 'Add a job you want to pursue',
-      description: 'Check the Discover tab for roles that fit your background, then paste any job posting or upload a screenshot.',
+      title: 'Pick a job to pursue',
+      description: 'You do not need to go find one. The Discover tab searches live listings and scores each against your resume, so you can start from a match. Have your own posting? Paste it or upload a screenshot instead.',
       action: hasResume ? (
-        <button onClick={onAddJob} className="inline-block px-4 py-1.5 bg-teal text-white font-montserrat font-semibold text-xs rounded-sm hover:bg-teal-deeper transition-colors">
-          + Add a job
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={onSeeMatches} className="inline-block px-4 py-1.5 bg-teal text-white font-montserrat font-semibold text-xs rounded-sm hover:bg-teal-deeper transition-colors">
+            See my matches
+          </button>
+          <button onClick={onAddJob} className="font-lora text-xs text-ink/50 hover:text-teal underline-offset-2 hover:underline transition-colors">
+            or add your own posting
+          </button>
+        </div>
       ) : null,
     },
     {
