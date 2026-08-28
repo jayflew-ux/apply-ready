@@ -244,7 +244,7 @@ async function tailorResume(resumeText, jobDescription, answers = [], style = 'c
 
   const response = await createMessage({
     model: MODEL_PREMIUM,
-    max_tokens: 3000,
+    max_tokens: 4000,
     system: [
       { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
       {
@@ -262,13 +262,20 @@ CONTENT RULES:
 STRUCTURE RULES (non-negotiable, apply regardless of style):
 - Always begin with the candidate's name on the first line, then contact info on the next line.
 - Always include these clearly labeled sections in this order: PROFESSIONAL SUMMARY, EXPERIENCE, EDUCATION, SKILLS.
+- EDUCATION and SKILLS are MANDATORY. Never omit them, never merge them into another section, and never drop them to save space. A resume missing education or skills is incomplete and will be rejected by both recruiters and applicant tracking systems.
 - Add additional sections (CERTIFICATIONS, PROJECTS, etc.) only if present in the original resume.
 - Each section must be separated by a blank line and introduced with its label in ALL CAPS.
 - Under EXPERIENCE, each role must show: Job Title | Company | Location | Start Date – End Date, followed by 3–5 bullet points.
 - Each bullet point starts with a strong action verb and includes a specific outcome or scope where available.
 - Under SKILLS, group into subcategories (e.g., Technical, Leadership, Tools) when there are 6+ skills.
 
-LENGTH RULE (non-negotiable): the final resume must fit within two U.S. Letter pages when printed. Target roughly 500–650 words total. Prioritize the highest-impact, most relevant experience for this specific role over completeness. If the original resume has more roles or bullets than fit, cut or condense the least relevant ones rather than shrinking type. Older or less relevant roles can be trimmed to one line.
+WORK HISTORY COVERAGE (non-negotiable):
+- Include EVERY role from the original resume that falls within the last 10 years. Do not drop a job because it seems less relevant; an unexplained employment gap is far more damaging than an unrelated role.
+- If the candidate has 8 or more years of history, the finished resume must visibly span at least those 8 years. Never reduce a multi-role career to two jobs.
+- Roles older than 10 years may be condensed into a brief EARLIER EXPERIENCE list of title, company, and dates, but only after the recent decade is fully covered.
+- CONDENSE, never delete. A less relevant role gets fewer bullets (one or two), not removal. The most relevant roles get the full 3-5 bullets.
+
+LENGTH RULE: the finished resume must fit within two U.S. Letter pages when printed, and for an experienced candidate it should USE most of that space. Aim for roughly 700-900 words when the candidate's history supports it. A one-page resume for someone with 8+ years of experience is a failure, not a success. Only trim toward the lower end if the candidate genuinely has little history. If you are over two pages, shorten bullet wording and reduce bullets on older roles first; never solve a length problem by deleting the education section, the skills section, or a job.
 
 Style requested: ${style}
 
@@ -279,6 +286,48 @@ Return the complete resume as plain text. Nothing before the candidate's name. N
       {
         role: 'user',
         content: `ORIGINAL RESUME:\n${resumeText}${answersText}\n\n---\n\nTARGET JOB POSTING:\n${jobDescription}`,
+      },
+    ],
+  });
+
+  return extractText(response).trim();
+}
+
+// Lets the candidate correct a tailored resume in their own words. The
+// original resume stays canonical, so feedback can restore or re-emphasize
+// real history but cannot introduce anything the candidate never documented.
+async function reviseResume(originalResumeText, tailoredResumeText, jobDescription, feedback) {
+  const response = await createMessage({
+    model: MODEL_PREMIUM,
+    max_tokens: 4000,
+    system: [
+      { type: 'text', text: RECRUITER_SYSTEM, cache_control: { type: 'ephemeral' } },
+      {
+        type: 'text',
+        text: `You previously tailored this candidate's resume for a specific job. The candidate has read the result and told you what they want changed. Produce a corrected version.
+
+HOW TO APPLY FEEDBACK:
+- Treat the feedback as the priority for this revision. If they say something is missing, restore it. If they say something is too short, expand it. If they want different emphasis, re-emphasize.
+- Apply the feedback fully, not partially. Do not quietly ignore part of the request.
+- Keep everything else about the resume that the feedback did not ask you to change.
+- You may pull anything from the ORIGINAL RESUME back in, including sections or roles the previous version dropped.
+- You may NOT invent anything absent from the original resume. If the candidate asks for something their history does not support, include what is genuinely there and leave it at that. Never fabricate a degree, employer, date, title, or metric.
+
+EVERYTHING BELOW STILL APPLIES:
+- Start with the candidate's name, then contact info.
+- Include PROFESSIONAL SUMMARY, EXPERIENCE, EDUCATION, and SKILLS. Education and skills are mandatory and must never be dropped.
+- Cover every role from the last 10 years; if the candidate has 8+ years of history, the resume must visibly span it. Condense older or less relevant roles rather than deleting them.
+- EXPERIENCE entries read: Job Title | Company | Location | Start Date – End Date, followed by bullets that start with a strong action verb.
+- Fit within two U.S. Letter pages, using most of that space for an experienced candidate.
+- No disclaimers, notes, caveats, or meta-commentary anywhere in the resume. Do not explain what you changed.
+
+Return the complete revised resume as plain text. Nothing before the candidate's name. Nothing after the last line of content.`,
+      },
+    ],
+    messages: [
+      {
+        role: 'user',
+        content: `ORIGINAL RESUME (the canonical source of truth):\n${originalResumeText}\n\n---\n\nTARGET JOB POSTING:\n${jobDescription}\n\n---\n\nTHE VERSION YOU PRODUCED:\n${tailoredResumeText}\n\n---\n\nWHAT THE CANDIDATE WANTS CHANGED:\n${feedback}`,
       },
     ],
   });
@@ -600,6 +649,7 @@ module.exports = {
   fitScore,
   scoreImprovementQuestions,
   tailorResume,
+  reviseResume,
   writeCoverLetter,
   interviewPrep,
   postInterviewDebrief,

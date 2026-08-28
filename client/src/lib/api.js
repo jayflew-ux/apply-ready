@@ -93,6 +93,7 @@ export const api = {
     scoreQuestions:  (id)         => api.post(`/ai/score-questions/${id}`, {}),
     rescore:         (id, body)   => api.post(`/ai/rescore/${id}`, body),
     tailorResume:    (id, body)   => api.post(`/ai/tailor-resume/${id}`, body),
+    reviseResume:    (id, body)   => api.post(`/ai/revise-resume/${id}`, body),
     coverLetter:     (id, body)   => api.post(`/ai/cover-letter/${id}`, body),
     interviewPrep:   (id, body)   => api.post(`/ai/interview-prep/${id}`, body || {}),
     debrief:         (id, body)   => api.post(`/ai/debrief/${id}`, body),

@@ -29,6 +29,12 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
   const [letterText, setLetterText] = useState('');
   const [error, setError]          = useState('');
   const [upgradeOpen, setUpgrade]  = useState(false);
+  const [feedback, setFeedback]    = useState('');
+  const [revising, setRevising]    = useState(false);
+  const [revisionsUsed, setRevUsed] = useState(0);
+  const [revisionsLimit, setRevLimit] = useState(2);
+  const [feedbackOpen, setFbOpen]  = useState(false);
+  const [reviseNote, setReviseNote] = useState('');
 
   // Step 0: auto-fetch fit score if not already loaded
   useEffect(() => {
@@ -76,6 +82,10 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
     try {
       const data = await api.ai.tailorResume(userJobId, { answers: answersArr });
       setResumeText(data.tailored_resume_text);
+      setRevUsed(0);          // a fresh build restores both revisions
+      setFbOpen(false);
+      setFeedback('');
+      setReviseNote('');
     } catch (e) {
       if (e.data?.upgrade_required) {
         setUpgrade(true);
@@ -104,6 +114,26 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
       }
     } finally {
       setLoadingL(false);
+    }
+  }
+
+  async function submitFeedback() {
+    if (!feedback.trim()) return;
+    setRevising(true);
+    setError('');
+    try {
+      const data = await api.ai.reviseResume(userJobId, { feedback: feedback.trim() });
+      setResumeText(data.tailored_resume_text);
+      setRevUsed(data.revisions_used);
+      setRevLimit(data.revisions_limit);
+      setFeedback('');
+      setFbOpen(false);
+      setReviseNote('Updated with your feedback.');
+    } catch (e) {
+      setError(e.message);
+      if (e.data?.revisions_used != null) setRevUsed(e.data.revisions_used);
+    } finally {
+      setRevising(false);
     }
   }
 
@@ -260,9 +290,66 @@ export default function OptimizationFlow({ userJobId, job, fitScore, fitScoreRep
               </div>
               <p className="font-lora text-xs text-ink/40">
                 {estimateResumePages(resumeText) > 2
-                  ? 'This is running long and may print past two pages. You can still continue, or answer the earlier questions more concisely and regenerate.'
-                  : 'Looks good? Print it as a PDF or move on to your cover letter.'}
+                  ? 'This is running long and may print past two pages. Ask for a trim below, or continue as is.'
+                  : 'Not quite right? Tell the AI what to change before you print it.'}
               </p>
+
+              {/* Feedback loop — recourse when the output is not what they expected */}
+              <div className="bg-white border border-[#e5e5e0] rounded-sm p-4">
+                {reviseNote && !feedbackOpen && (
+                  <p className="font-lora text-xs text-teal mb-2">{reviseNote}</p>
+                )}
+
+                {!feedbackOpen ? (
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <p className="font-lora text-sm text-ink/70">
+                      {revisionsUsed >= revisionsLimit
+                        ? 'You have used both revisions for this job. Regenerate the resume above to start over with a fresh pair.'
+                        : 'Missing something, or want different emphasis? Tell the AI and it will rewrite it.'}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={revisionsUsed >= revisionsLimit}
+                      onClick={() => { setFbOpen(true); setReviseNote(''); }}
+                    >
+                      Request changes
+                      {revisionsUsed < revisionsLimit && ` (${revisionsLimit - revisionsUsed} left)`}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <p className="font-montserrat font-semibold text-sm text-ink/80 mb-1">What should change?</p>
+                      <p className="font-lora text-xs text-ink/50 mb-2">
+                        Be specific. For example: "You left off my education and my two earliest roles, please put them back,"
+                        or "Lead with my management experience instead of the technical work."
+                      </p>
+                    </div>
+                    <Textarea
+                      placeholder="Tell the AI what to fix..."
+                      value={feedback}
+                      onChange={e => setFeedback(e.target.value)}
+                      maxLength={2000}
+                    />
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <Button size="sm" onClick={submitFeedback} loading={revising} disabled={!feedback.trim()}>
+                        Rewrite it
+                      </Button>
+                      <button
+                        onClick={() => { setFbOpen(false); setFeedback(''); }}
+                        className="font-lora text-xs text-ink/40 hover:text-ink/60"
+                      >
+                        Cancel
+                      </button>
+                      <span className="font-lora text-xs text-ink/40">
+                        {revisionsLimit - revisionsUsed} of {revisionsLimit} revisions left for this job
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 flex-wrap">
                 <Button
                   variant="outline"

@@ -183,6 +183,7 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
         tailored_resume_text: tailored,
         tailored_resume_style: style || 'classic',
         score_improvement_answers: answers,
+        resume_revisions_used: 0, // a fresh build restores both revisions
       })
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id);
@@ -198,6 +199,57 @@ router.post('/tailor-resume/:userJobId', async (req, res, next) => {
       tailored_resume_text: tailored,
       builds_used: isRegeneration ? buildsUsed : buildsUsed + 1,
       builds_limit: (!BILLING_LIVE || isSubscriber) ? null : FREE_RESUME_BUILDS,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Revise a tailored resume from the candidate's own feedback.
+// Capped per job so a misunderstanding has a fix without becoming a
+// free-running generation loop.
+const MAX_RESUME_REVISIONS = 2;
+
+router.post('/revise-resume/:userJobId', async (req, res, next) => {
+  try {
+    const { resumeText, userJob, job } = await getContext(req);
+    if (!resumeText) return res.status(400).json({ error: 'No active resume found' });
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+
+    const feedback = (req.body?.feedback || '').trim();
+    if (!feedback) return res.status(400).json({ error: 'Tell us what you would like changed.' });
+    if (feedback.length > 2000) return res.status(400).json({ error: 'Please keep feedback under 2000 characters.' });
+
+    if (!userJob.tailored_resume_text) {
+      return res.status(400).json({ error: 'Generate a tailored resume first, then you can request changes.' });
+    }
+
+    const used = userJob.resume_revisions_used || 0;
+    if (used >= MAX_RESUME_REVISIONS) {
+      return res.status(403).json({
+        error: `You have used both revisions for this job. You can still edit the text yourself after downloading, or start this job fresh to reset.`,
+        revisions_used: used,
+        revisions_limit: MAX_RESUME_REVISIONS,
+      });
+    }
+
+    const revised = await ai.reviseResume(
+      resumeText,
+      userJob.tailored_resume_text,
+      job.description,
+      feedback,
+    );
+
+    await req.db
+      .from('user_jobs')
+      .update({ tailored_resume_text: revised, resume_revisions_used: used + 1 })
+      .eq('id', req.params.userJobId)
+      .eq('user_id', req.user.id);
+
+    res.json({
+      tailored_resume_text: revised,
+      revisions_used: used + 1,
+      revisions_limit: MAX_RESUME_REVISIONS,
     });
   } catch (err) {
     next(err);
