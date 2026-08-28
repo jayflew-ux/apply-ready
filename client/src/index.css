@@ -49,11 +49,11 @@
     background:
       linear-gradient(
         180deg,
-        rgba(250, 247, 241, 0.86) 0%,
-        rgba(250, 247, 241, 0.72) 38%,
-        rgba(250, 247, 241, 0.90) 100%
+        rgba(250, 247, 241, 0.72) 0%,
+        rgba(250, 247, 241, 0.50) 40%,
+        rgba(250, 247, 241, 0.80) 100%
       ),
-      url('/atmosphere.jpg') center top / cover no-repeat fixed;
+      url('/atmosphere.jpg') center center / cover no-repeat;
     pointer-events: none;
   }
 
