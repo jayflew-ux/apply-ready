@@ -122,19 +122,38 @@ router.get('/feed', async (req, res, next) => {
 // documents can be downloaded from anywhere in the app.
 router.get('/:userJobId/progress', async (req, res, next) => {
   try {
-    const { data, error } = await req.db
-      .from('user_jobs')
-      .select(`
+    const CORE = `
         id, status, fit_score, fit_score_report, score_improvement_answers,
-        tailored_resume_text, tailored_resume_style, resume_revisions_used,
+        tailored_resume_text, tailored_resume_style,
         cover_letter_text, interview_prep, post_interview_debrief,
-        jobs ( id, title, company, location, url, description )
-      `)
+        jobs ( id, title, company, location, url, description )`;
+
+    // resume_revisions_used ships in a later migration. Ask for it, but fall
+    // back to the core columns if it is not present yet so restoring progress
+    // never breaks on a schema that is one migration behind.
+    let { data, error } = await req.db
+      .from('user_jobs')
+      .select(`${CORE}, resume_revisions_used`)
       .eq('id', req.params.userJobId)
       .eq('user_id', req.user.id)
       .single();
 
-    if (error || !data) return res.status(404).json({ error: 'Job not found' });
+    if (error) {
+      ({ data, error } = await req.db
+        .from('user_jobs')
+        .select(CORE)
+        .eq('id', req.params.userJobId)
+        .eq('user_id', req.user.id)
+        .single());
+    }
+
+    if (error || !data) {
+      console.error('progress lookup failed', {
+        userJobId: req.params.userJobId,
+        message: error?.message,
+      });
+      return res.status(404).json({ error: 'Job not found' });
+    }
 
     res.json({
       userJobId: data.id,
